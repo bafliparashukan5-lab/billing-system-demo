@@ -50,26 +50,42 @@ app.post('/api/superadmin/tenants/:id/features', (req, res) => {
   res.json(tenant);
 });
 
-// --- 1. Dashboard Metrics & Analytics API ---
+// --- 1. Dynamic Dashboard Metrics & Graph API ---
 app.get('/api/dashboard', (req, res) => {
   const metrics = dbStore.getDashboardMetrics();
   
-  const salesGraph = [
-    { month: 'Feb', sales: 120000, profit: 28000, purchases: 95000 },
-    { month: 'Mar', sales: 155000, profit: 34000, purchases: 110000 },
-    { month: 'Apr', sales: 180000, profit: 42000, purchases: 135000 },
-    { month: 'May', sales: 210000, profit: 48000, purchases: 140000 },
-    { month: 'Jun', sales: 245000, profit: 54000, purchases: 165000 },
-    { month: 'Jul', sales: 280000, profit: 62000, purchases: 190000 },
-    { month: 'Aug', sales: metrics.totalSales, profit: metrics.grossProfit, purchases: metrics.totalPurchases },
-  ];
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const currentMonthIdx = new Date().getMonth();
+  
+  const salesGraph = [0, 1, 2, 3, 4, 5].map(offset => {
+    const idx = (currentMonthIdx - 5 + offset + 12) % 12;
+    const monthName = monthNames[idx];
+    
+    const monthlyInvoices = dbStore.salesInvoices.filter(i => {
+      const d = new Date(i.invoiceDate);
+      return d.getMonth() === idx;
+    });
 
-  const categoryDistribution = [
-    { name: 'Laptops', value: 45 },
-    { name: 'Monitors', value: 25 },
-    { name: 'Accessories', value: 18 },
-    { name: 'Printers', value: 12 }
-  ];
+    const monthlyPurchases = dbStore.purchaseBills.filter(b => {
+      const d = new Date(b.billDate);
+      return d.getMonth() === idx && b.status === 'POSTED';
+    });
+
+    const sales = monthlyInvoices.reduce((sum, i) => sum + i.grandTotal, 0);
+    const purchases = monthlyPurchases.reduce((sum, b) => sum + b.grandTotal, 0);
+    const profit = Math.round(sales * 0.20);
+
+    return { month: monthName, sales, profit, purchases };
+  });
+
+  const categoryMap: { [cat: string]: number } = {};
+  dbStore.products.forEach(p => {
+    categoryMap[p.category || 'General'] = (categoryMap[p.category || 'General'] || 0) + 1;
+  });
+
+  const categoryDistribution = Object.keys(categoryMap).length > 0 
+    ? Object.entries(categoryMap).map(([name, value]) => ({ name, value }))
+    : [{ name: 'No Products Yet', value: 1 }];
 
   res.json({
     metrics,
@@ -81,9 +97,14 @@ app.get('/api/dashboard', (req, res) => {
   });
 });
 
-// --- 2. Company & Branch API ---
+// --- 2. Company & Branch API (With Disk Persistence) ---
 app.get('/api/company', (req, res) => {
   res.json(dbStore.company);
+});
+
+app.post('/api/company', (req, res) => {
+  const updatedCompany = dbStore.updateCompanyProfile(req.body);
+  res.json(updatedCompany);
 });
 
 app.get('/api/branches', (req, res) => {
@@ -279,7 +300,7 @@ app.get('/api/gst/reports', (req, res) => {
       hsnSac: p.hsnSac,
       description: p.name,
       totalQty: p.openingStock - p.currentStock,
-      totalTaxable: (p.openingStock - p.currentStock) * p.rates.retailRate,
+      totalTaxable: (p.openingStock - p.currentStock) * (p.rates?.retailRate || 0),
       gstRate: p.gstRate
     }))
   };
@@ -304,10 +325,10 @@ app.get('/api/audit-logs', (req, res) => {
 // --- 10. BI Analytics & AI Forecast API ---
 app.get('/api/analytics', (req, res) => {
   res.json({
-    aiInsights: [
-      { type: 'PROFIT', title: 'High Margin Product Detected', description: 'Logitech MX Master Mouse yields a 43.5% gross profit margin. Recommend promotional bundle.' },
-      { type: 'INVENTORY', title: 'Reorder Warning: HP LaserJet Printer', description: 'Current stock is 4 units (below min reorder limit of 6). Recommended reorder qty: 15 units.' },
-      { type: 'CREDIT', title: 'Overdue Collection Alert', description: 'Reliance Retail has ₹1,78,500 pending beyond 30 days credit terms.' }
+    aiInsights: dbStore.products.length === 0 ? [
+      { type: 'INFO', title: 'System Ready for Data Input', description: 'Add your products in Product Master to generate automated profit margin & stock reorder warnings.' }
+    ] : [
+      { type: 'PROFIT', title: 'Margin Analysis Active', description: `${dbStore.products[0].name} configured with ₹${dbStore.products[0].rates.retailRate} retail price.` }
     ],
     topCustomers: dbStore.customers.slice(0, 3),
     fastMovingProducts: dbStore.products.filter(p => p.currentStock < p.openingStock)
@@ -317,7 +338,7 @@ app.get('/api/analytics', (req, res) => {
 // Graceful Port Fallback Handler
 const startServer = (port: number) => {
   const server = app.listen(port, () => {
-    console.log(`⚡ ApexERP Demo Express API Server running on port ${port}`);
+    console.log(`⚡ ApexERP Express API Server running on port ${port}`);
   });
 
   server.on('error', (err: any) => {

@@ -6,7 +6,7 @@ import { Plus, Eye } from 'lucide-react';
 export const SalesPage: React.FC = () => {
   const { 
     salesInvoices, customers, products, createSalesInvoice, 
-    convertDocument, setActivePdfInvoice 
+    convertDocument, setActivePdfInvoice, addToast 
   } = useERP();
 
   const [activeTab, setActiveTab] = useState<SalesDocType>('SALES_INVOICE');
@@ -29,6 +29,11 @@ export const SalesPage: React.FC = () => {
   const handleCreate = async () => {
     const cust = customers.find(c => c.id === selectedCustomerId) || customers[0];
     const prod = products.find(p => p.id === selectedProductId) || products[0];
+
+    if (!cust || !prod) {
+      addToast('warning', 'Please add at least 1 Customer and 1 Product first in Master Data!');
+      return;
+    }
 
     const isInterState = cust.state !== 'Maharashtra';
 
@@ -116,7 +121,7 @@ export const SalesPage: React.FC = () => {
               {filteredInvoices.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-8 text-center text-slate-500">
-                    No {activeTab.replace('_', ' ')} documents found. Click + Create to add one.
+                    No {activeTab.replace('_', ' ')} documents created yet. Click + Create to add one.
                   </td>
                 </tr>
               ) : (
@@ -171,62 +176,73 @@ export const SalesPage: React.FC = () => {
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4">
             <h2 className="text-lg font-bold text-slate-100">Create New {activeTab.replace('_', ' ')}</h2>
             
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block text-slate-400 mb-1 font-semibold">Select Customer:</label>
-                <select 
-                  value={selectedCustomerId}
-                  onChange={(e) => setSelectedCustomerId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-xl"
-                >
-                  {customers.map(c => (
-                    <option key={c.id} value={c.id}>{c.name} ({c.state})</option>
-                  ))}
-                </select>
+            {customers.length === 0 || products.length === 0 ? (
+              <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl text-xs text-amber-300 space-y-2">
+                <p className="font-bold">⚠️ No Masters Found!</p>
+                <p>Please add at least 1 Customer and 1 Product in Master Data before creating sales invoices.</p>
+                <button onClick={() => setShowCreateModal(false)} className="bg-amber-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg">
+                  Got It
+                </button>
               </div>
-
-              <div>
-                <label className="block text-slate-400 mb-1 font-semibold">Select Product:</label>
-                <select 
-                  value={selectedProductId}
-                  onChange={(e) => setSelectedProductId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-xl"
-                >
-                  {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} - ₹{p.rates.retailRate}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+            ) : (
+              <div className="space-y-3 text-xs">
                 <div>
-                  <label className="block text-slate-400 mb-1 font-semibold">Quantity:</label>
-                  <input 
-                    type="number" 
-                    min={1} 
-                    value={quantity} 
-                    onChange={(e) => setQuantity(Number(e.target.value))}
+                  <label className="block text-slate-400 mb-1 font-semibold">Select Customer:</label>
+                  <select 
+                    value={selectedCustomerId || customers[0]?.id}
+                    onChange={(e) => setSelectedCustomerId(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-xl"
-                  />
+                  >
+                    {customers.map(c => (
+                      <option key={c.id} value={c.id}>{c.name} ({c.state})</option>
+                    ))}
+                  </select>
                 </div>
+
                 <div>
-                  <label className="block text-slate-400 mb-1 font-semibold">Discount %:</label>
-                  <input 
-                    type="number" 
-                    min={0} 
-                    max={100} 
-                    value={discountPercent} 
-                    onChange={(e) => setDiscountPercent(Number(e.target.value))}
+                  <label className="block text-slate-400 mb-1 font-semibold">Select Product:</label>
+                  <select 
+                    value={selectedProductId || products[0]?.id}
+                    onChange={(e) => setSelectedProductId(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-xl"
-                  />
+                  >
+                    {products.map(p => (
+                      <option key={p.id} value={p.id}>{p.name} - ₹{p.rates.retailRate}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-semibold">Quantity:</label>
+                    <input 
+                      type="number" 
+                      min={1} 
+                      value={quantity} 
+                      onChange={(e) => setQuantity(Number(e.target.value))}
+                      className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-xl"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-semibold">Discount %:</label>
+                    <input 
+                      type="number" 
+                      min={0} 
+                      max={100} 
+                      value={discountPercent} 
+                      onChange={(e) => setDiscountPercent(Number(e.target.value))}
+                      className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex space-x-3 pt-3">
+                  <button onClick={() => setShowCreateModal(false)} className="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs font-semibold">Cancel</button>
+                  <button onClick={handleCreate} className="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 rounded-xl text-xs">Save & Post</button>
                 </div>
               </div>
-            </div>
+            )}
 
-            <div className="flex space-x-3 pt-3">
-              <button onClick={() => setShowCreateModal(false)} className="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs font-semibold">Cancel</button>
-              <button onClick={handleCreate} className="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 rounded-xl text-xs">Save & Post</button>
-            </div>
           </div>
         </div>
       )}

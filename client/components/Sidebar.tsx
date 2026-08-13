@@ -51,24 +51,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
         { id: 'products', label: 'Product Master & Rates', icon: Tag, enabled: tenantFeatures.productRates },
         { id: 'masters', label: 'Customer & Suppliers', icon: Package, enabled: true },
         { id: 'inventory', label: 'Godown & Batch Stock', icon: Warehouse, enabled: tenantFeatures.inventoryGodown },
+        { id: 'company', label: 'Company & Bill Settings', icon: Building, enabled: true },
       ].filter(i => i.enabled !== false)
     },
-    {
-      group: 'FINANCE & COMPLIANCE',
-      items: [
-        { id: 'accounts', label: 'Accounting & Ledgers', icon: BookOpen, enabled: tenantFeatures.accountsLedger },
-        { id: 'gst', label: 'GST, E-Invoice & E-Way', icon: FileText, enabled: tenantFeatures.gstStatutory },
-        { id: 'outstanding', label: 'Receivables / Payables', icon: Clock, enabled: tenantFeatures.outstandingAgeing },
-      ].filter(i => i.enabled !== false)
-    },
-    {
-      group: 'INTELLIGENCE & SECURITY',
-      items: [
-        { id: 'analytics', label: 'BI Analytics & AI', icon: BarChart3, enabled: tenantFeatures.analyticsAi },
-        { id: 'company', label: 'Company & Branches', icon: Building, enabled: true },
-        { id: 'audit-trail', label: 'Security & Audit Logs', icon: ShieldCheck, enabled: true },
-      ].filter(i => i.enabled !== false)
-    }
+    ...(isSuperAdmin ? [
+      {
+        group: 'FINANCE & COMPLIANCE',
+        items: [
+          { id: 'accounts', label: 'Accounting & Ledgers', icon: BookOpen, enabled: tenantFeatures.accountsLedger },
+          { id: 'gst', label: 'GST, E-Invoice & E-Way', icon: FileText, enabled: tenantFeatures.gstStatutory },
+          { id: 'outstanding', label: 'Receivables / Payables', icon: Clock, enabled: tenantFeatures.outstandingAgeing },
+        ].filter(i => i.enabled !== false)
+      },
+      {
+        group: 'INTELLIGENCE & SECURITY',
+        items: [
+          { id: 'analytics', label: 'BI Analytics & AI', icon: BarChart3, enabled: tenantFeatures.analyticsAi },
+          { id: 'audit-trail', label: 'Security & Audit Logs', icon: ShieldCheck, enabled: true },
+        ].filter(i => i.enabled !== false)
+      }
+    ] : [])
   ];
 
   return (
@@ -131,7 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
       <div className="p-4 border-t border-slate-800/80 bg-slate-950/40 space-y-2">
         <button
           onClick={logout}
-          className="w-full flex items-center justify-center space-x-2 py-2 bg-slate-800 hover:bg-rose-950/60 hover:text-rose-300 border border-slate-700 rounded-xl text-xs font-bold transition text-slate-300"
+          className="w-full flex items-center justify-center space-x-2 py-2 bg-slate-800 hover:bg-rose-950/60 hover:text-rose-300 border border-slate-700 rounded-xl text-xs font-bold transition text-slate-300 cursor-pointer"
         >
           <LogOut className="w-3.5 h-3.5" />
           <span>Logout Portal</span>

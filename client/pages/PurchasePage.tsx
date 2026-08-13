@@ -4,16 +4,21 @@ import { LineItem } from '../../shared/types';
 import { Plus, CheckCircle2, Lock } from 'lucide-react';
 
 export const PurchasePage: React.FC = () => {
-  const { purchaseBills, suppliers, products, createPurchaseBill, setActiveOtpBill } = useERP();
+  const { purchaseBills, suppliers, products, createPurchaseBill, setActiveOtpBill, addToast } = useERP();
   const [showModal, setShowModal] = useState(false);
   const [supplierId, setSupplierId] = useState(suppliers[0]?.id || '');
   const [productId, setProductId] = useState(products[0]?.id || '');
-  const [quantity, setQuantity] = useState(2);
-  const [rate, setRate] = useState(products[0]?.rates.purchaseCostRate || 92000);
+  const [quantity, setQuantity] = useState(1);
+  const [rate, setRate] = useState(1000);
 
   const handleCreate = async () => {
     const supp = suppliers.find(s => s.id === supplierId) || suppliers[0];
     const prod = products.find(p => p.id === productId) || products[0];
+
+    if (!supp || !prod) {
+      addToast('warning', 'Please add at least 1 Supplier and 1 Product first in Master Data!');
+      return;
+    }
 
     const items: LineItem[] = [{
       id: 'pli_' + Date.now(),
@@ -78,40 +83,48 @@ export const PurchasePage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
-              {purchaseBills.map(bill => (
-                <tr key={bill.id} className="hover:bg-slate-800/40 transition">
-                  <td className="py-3 px-4 font-bold text-purple-400">{bill.billNumber}</td>
-                  <td className="py-3 px-4 font-semibold text-slate-200">
-                    {bill.supplierName}
-                    <span className="text-[10px] text-slate-500 block">GSTIN: {bill.supplierGstin}</span>
-                  </td>
-                  <td className="py-3 px-4 text-slate-400">{bill.billDate}</td>
-                  <td className="py-3 px-4 text-right font-medium text-slate-300">₹{bill.totalTaxable.toLocaleString('en-IN')}</td>
-                  <td className="py-3 px-4 text-right font-extrabold text-slate-100">₹{bill.grandTotal.toLocaleString('en-IN')}</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2.5 py-1 rounded text-[10px] font-bold flex items-center space-x-1 w-fit ${
-                      bill.status === 'POSTED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                      bill.status === 'PENDING_OWNER_OTP' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse' :
-                      'bg-slate-800 text-slate-400'
-                    }`}>
-                      {bill.status === 'POSTED' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                      <span>{bill.status.replace('_', ' ')}</span>
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    {bill.status === 'PENDING_OWNER_OTP' ? (
-                      <button
-                        onClick={() => setActiveOtpBill(bill)}
-                        className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold rounded-lg text-xs hover:from-amber-400 hover:to-orange-400 shadow-md transition"
-                      >
-                        Enter Owner OTP
-                      </button>
-                    ) : (
-                      <span className="text-[11px] text-slate-400 italic">Posted & Verified</span>
-                    )}
+              {purchaseBills.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-slate-500">
+                    No purchase bills created yet. Click + Create Purchase Bill to record your first stock entry.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                purchaseBills.map(bill => (
+                  <tr key={bill.id} className="hover:bg-slate-800/40 transition">
+                    <td className="py-3 px-4 font-bold text-purple-400">{bill.billNumber}</td>
+                    <td className="py-3 px-4 font-semibold text-slate-200">
+                      {bill.supplierName}
+                      <span className="text-[10px] text-slate-500 block">GSTIN: {bill.supplierGstin}</span>
+                    </td>
+                    <td className="py-3 px-4 text-slate-400">{bill.billDate}</td>
+                    <td className="py-3 px-4 text-right font-medium text-slate-300">₹{bill.totalTaxable.toLocaleString('en-IN')}</td>
+                    <td className="py-3 px-4 text-right font-extrabold text-slate-100">₹{bill.grandTotal.toLocaleString('en-IN')}</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2.5 py-1 rounded text-[10px] font-bold flex items-center space-x-1 w-fit ${
+                        bill.status === 'POSTED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                        bill.status === 'PENDING_OWNER_OTP' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse' :
+                        'bg-slate-800 text-slate-400'
+                      }`}>
+                        {bill.status === 'POSTED' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                        <span>{bill.status.replace('_', ' ')}</span>
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      {bill.status === 'PENDING_OWNER_OTP' ? (
+                        <button
+                          onClick={() => setActiveOtpBill(bill)}
+                          className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold rounded-lg text-xs hover:from-amber-400 hover:to-orange-400 shadow-md transition"
+                        >
+                          Enter Owner OTP
+                        </button>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 italic">Posted & Verified</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -122,68 +135,79 @@ export const PurchasePage: React.FC = () => {
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4">
             <h2 className="text-lg font-bold text-slate-100">Create New Purchase Bill</h2>
             
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block text-slate-400 mb-1 font-semibold">Supplier:</label>
-                <select 
-                  value={supplierId}
-                  onChange={(e) => setSupplierId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-xl"
-                >
-                  {suppliers.map(s => (
-                    <option key={s.id} value={s.id}>{s.name} ({s.companyName})</option>
-                  ))}
-                </select>
+            {suppliers.length === 0 || products.length === 0 ? (
+              <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl text-xs text-amber-300 space-y-2">
+                <p className="font-bold">⚠️ No Masters Found!</p>
+                <p>Please add at least 1 Supplier and 1 Product in Master Data before creating purchase bills.</p>
+                <button onClick={() => setShowModal(false)} className="bg-amber-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg">
+                  Got It
+                </button>
               </div>
-
-              <div>
-                <label className="block text-slate-400 mb-1 font-semibold">Product Item:</label>
-                <select 
-                  value={productId}
-                  onChange={(e) => {
-                    setProductId(e.target.value);
-                    const prod = products.find(p => p.id === e.target.value);
-                    if (prod) setRate(prod.rates.purchaseCostRate);
-                  }}
-                  className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-xl"
-                >
-                  {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+            ) : (
+              <div className="space-y-3 text-xs">
                 <div>
-                  <label className="block text-slate-400 mb-1 font-semibold">Quantity:</label>
-                  <input 
-                    type="number" 
-                    min={1} 
-                    value={quantity} 
-                    onChange={(e) => setQuantity(Number(e.target.value))}
+                  <label className="block text-slate-400 mb-1 font-semibold">Supplier:</label>
+                  <select 
+                    value={supplierId || suppliers[0]?.id}
+                    onChange={(e) => setSupplierId(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-xl"
-                  />
+                  >
+                    {suppliers.map(s => (
+                      <option key={s.id} value={s.id}>{s.name} ({s.companyName})</option>
+                    ))}
+                  </select>
                 </div>
+
                 <div>
-                  <label className="block text-slate-400 mb-1 font-semibold">Purchase Rate (₹):</label>
-                  <input 
-                    type="number" 
-                    value={rate} 
-                    onChange={(e) => setRate(Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-xl font-mono"
-                  />
+                  <label className="block text-slate-400 mb-1 font-semibold">Product Item:</label>
+                  <select 
+                    value={productId || products[0]?.id}
+                    onChange={(e) => {
+                      setProductId(e.target.value);
+                      const prod = products.find(p => p.id === e.target.value);
+                      if (prod) setRate(prod.rates.purchaseCostRate);
+                    }}
+                    className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-xl"
+                  >
+                    {products.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-semibold">Quantity:</label>
+                    <input 
+                      type="number" 
+                      min={1} 
+                      value={quantity} 
+                      onChange={(e) => setQuantity(Number(e.target.value))}
+                      className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-xl"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-semibold">Purchase Rate (₹):</label>
+                    <input 
+                      type="number" 
+                      value={rate} 
+                      onChange={(e) => setRate(Number(e.target.value))}
+                      className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-xl font-mono"
+                    />
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-amber-400 italic pt-1">
+                  * Note: If total amount exceeds ₹1,00,000, Owner OTP will be required before posting.
+                </p>
+
+                <div className="flex space-x-3 pt-3">
+                  <button onClick={() => setShowModal(false)} className="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs font-semibold">Cancel</button>
+                  <button onClick={handleCreate} className="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl text-xs">Generate Purchase Bill</button>
                 </div>
               </div>
+            )}
 
-              <p className="text-[11px] text-amber-400 italic pt-1">
-                * Note: If total amount exceeds ₹1,00,000, Owner OTP will be required before posting.
-              </p>
-            </div>
-
-            <div className="flex space-x-3 pt-3">
-              <button onClick={() => setShowModal(false)} className="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs font-semibold">Cancel</button>
-              <button onClick={handleCreate} className="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl text-xs">Generate Purchase Bill</button>
-            </div>
           </div>
         </div>
       )}

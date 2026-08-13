@@ -1,9 +1,44 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useERP } from '../context/ERPContext';
-import { MapPin, Phone, Mail } from 'lucide-react';
+import { MapPin, Phone, Mail, Edit3, Building, Save } from 'lucide-react';
 
 export const CompanyPage: React.FC = () => {
-  const { company, branches } = useERP();
+  const { company, branches, refreshData, addToast } = useERP();
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  const [name, setName] = useState(company?.name || '');
+  const [tagline, setTagline] = useState(company?.tagline || '');
+  const [address, setAddress] = useState(company?.address || '');
+  const [cityState, setCityState] = useState(company?.cityState || '');
+  const [pincode, setPincode] = useState(company?.pincode || '');
+  const [phone, setPhone] = useState(company?.phone || '');
+  const [email, setEmail] = useState(company?.email || '');
+  const [website, setWebsite] = useState(company?.website || '');
+  const [gstin, setGstin] = useState(company?.gstin || '');
+  const [pan, setPan] = useState(company?.pan || '');
+  const [cin, setCin] = useState(company?.cin || '');
+  const [bankName, setBankName] = useState(company?.bankName || '');
+  const [accountNo, setAccountNo] = useState(company?.accountNo || '');
+  const [ifscCode, setIfscCode] = useState(company?.ifscCode || '');
+  const [upiId, setUpiId] = useState(company?.upiId || '');
+
+  const handleSaveCompany = async () => {
+    try {
+      await fetch('/api/company', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name, tagline, address, cityState, pincode, phone, email, website,
+          gstin, pan, cin, bankName, accountNo, ifscCode, upiId
+        })
+      });
+      addToast('success', 'Company Profile & Invoice Header updated successfully!');
+      setShowEditModal(false);
+      await refreshData();
+    } catch (err) {
+      addToast('error', 'Failed to update company profile');
+    }
+  };
 
   if (!company) return null;
 
@@ -11,9 +46,36 @@ export const CompanyPage: React.FC = () => {
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-xl font-extrabold text-slate-100">Company & Branch Configuration</h1>
-          <p className="text-xs text-slate-400">Section 2 Master Company & Multi-Branch Settings.</p>
+          <h1 className="text-xl font-extrabold text-slate-100 flex items-center space-x-2">
+            <Building className="w-5 h-5 text-brand-400" />
+            <span>Company Profile & Printable Bill Header</span>
+          </h1>
+          <p className="text-xs text-slate-400">Configure your business details, GSTIN, PAN, Bank Details & Address for printed invoices.</p>
         </div>
+        <button
+          onClick={() => {
+            setName(company.name);
+            setTagline(company.tagline);
+            setAddress(company.address);
+            setCityState(company.cityState);
+            setPincode(company.pincode);
+            setPhone(company.phone);
+            setEmail(company.email);
+            setWebsite(company.website);
+            setGstin(company.gstin);
+            setPan(company.pan);
+            setCin(company.cin);
+            setBankName(company.bankName);
+            setAccountNo(company.accountNo);
+            setIfscCode(company.ifscCode);
+            setUpiId(company.upiId);
+            setShowEditModal(true);
+          }}
+          className="flex items-center space-x-2 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-brand-600/30 transition cursor-pointer"
+        >
+          <Edit3 className="w-4 h-4" />
+          <span>Edit Business Profile & Bill Header</span>
+        </button>
       </div>
 
       <div className="glass-panel p-6 rounded-2xl space-y-6">
@@ -68,13 +130,13 @@ export const CompanyPage: React.FC = () => {
         </div>
 
         <div className="border-t border-slate-800 pt-4">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Configured Operating Branches</h3>
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Operating Branches</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {branches.map(b => (
               <div key={b.id} className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1">
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-slate-200 text-sm">{b.name}</span>
-                  {b.isMain && <span className="bg-brand-500/20 text-brand-400 text-[10px] px-2 py-0.5 rounded font-bold">Head Office</span>}
+                  {b.isMain && <span className="bg-brand-500/20 text-brand-400 text-[10px] px-2 py-0.5 rounded font-bold">Main Office</span>}
                 </div>
                 <p className="text-xs text-slate-400">{b.address}</p>
                 <p className="text-xs text-slate-400">GSTIN: {b.gstin}</p>
@@ -84,6 +146,105 @@ export const CompanyPage: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Edit Company Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl my-auto">
+            <h2 className="text-lg font-bold text-slate-100 flex items-center space-x-2">
+              <Edit3 className="w-5 h-5 text-brand-400" />
+              <span>Edit Company Profile & Invoice Header</span>
+            </h2>
+
+            <div className="space-y-3 text-xs max-h-96 overflow-y-auto pr-1">
+              <div>
+                <label className="block text-slate-400 mb-1 font-semibold">Business Name:</label>
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200 font-bold" />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1 font-semibold">Tagline / Business Subtitle:</label>
+                <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200" />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1 font-semibold">Registered Address:</label>
+                <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">City, State:</label>
+                  <input type="text" value={cityState} onChange={(e) => setCityState(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200" />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">Pincode:</label>
+                  <input type="text" value={pincode} onChange={(e) => setPincode(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">Phone:</label>
+                  <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200" />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">Email:</label>
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">GSTIN:</label>
+                  <input type="text" value={gstin} onChange={(e) => setGstin(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200 font-mono uppercase" />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">PAN:</label>
+                  <input type="text" value={pan} onChange={(e) => setPan(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200 font-mono uppercase" />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">CIN:</label>
+                  <input type="text" value={cin} onChange={(e) => setCin(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200 font-mono uppercase" />
+                </div>
+              </div>
+
+              <div className="border-t border-slate-800 pt-3">
+                <h4 className="font-bold text-slate-300 mb-2">Invoice Bank Settlement Details</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-semibold">Bank Name:</label>
+                    <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200" />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-semibold">Account Number:</label>
+                    <input type="text" value={accountNo} onChange={(e) => setAccountNo(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200 font-mono" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mt-2">
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-semibold">IFSC Code:</label>
+                    <input type="text" value={ifscCode} onChange={(e) => setIfscCode(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200 font-mono uppercase" />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-semibold">UPI VPA ID:</label>
+                    <input type="text" value={upiId} onChange={(e) => setUpiId(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200 font-mono" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex space-x-3 pt-3">
+              <button onClick={() => setShowEditModal(false)} className="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs font-semibold">Cancel</button>
+              <button onClick={handleSaveCompany} className="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center space-x-1">
+                <Save className="w-4 h-4" />
+                <span>Save Profile Changes</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
