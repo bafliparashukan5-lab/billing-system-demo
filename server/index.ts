@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import { dbStore } from './store.js';
 
 dotenv.config();
@@ -333,6 +334,16 @@ app.get('/api/analytics', (req, res) => {
     topCustomers: dbStore.customers.slice(0, 3),
     fastMovingProducts: dbStore.products.filter(p => p.currentStock < p.openingStock)
   });
+});
+
+// --- Production Static Frontend Asset Serving ---
+const DIST_PATH = path.resolve(process.cwd(), 'dist');
+app.use(express.static(DIST_PATH));
+
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(DIST_PATH, 'index.html'));
+  }
 });
 
 // Graceful Port Fallback Handler
