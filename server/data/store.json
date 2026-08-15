@@ -479,6 +479,16 @@
   ],
   "auditLogs": [
     {
+      "id": "al_1786769242678",
+      "timestamp": "2026-08-15T04:47:22.678Z",
+      "userRole": "SUPER_ADMIN",
+      "userName": "Super Admin",
+      "action": "LOGIN_SUCCESS",
+      "module": "Auth",
+      "details": "Super Admin logged into SaaS management portal",
+      "ipAddress": "127.0.0.1"
+    },
+    {
       "id": "al_1786769194284",
       "timestamp": "2026-08-15T04:46:34.284Z",
       "userRole": "SALES",
