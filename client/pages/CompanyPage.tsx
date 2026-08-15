@@ -1,40 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useERP } from '../context/ERPContext';
 import { MapPin, Phone, Mail, Edit3, Building, Save } from 'lucide-react';
 
 export const CompanyPage: React.FC = () => {
-  const { company, branches, refreshData, addToast } = useERP();
+  const { company, branches, refreshData, addToast, session } = useERP();
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const [name, setName] = useState(company?.name || '');
-  const [tagline, setTagline] = useState(company?.tagline || '');
-  const [address, setAddress] = useState(company?.address || '');
-  const [cityState, setCityState] = useState(company?.cityState || '');
-  const [pincode, setPincode] = useState(company?.pincode || '');
-  const [phone, setPhone] = useState(company?.phone || '');
-  const [email, setEmail] = useState(company?.email || '');
-  const [website, setWebsite] = useState(company?.website || '');
-  const [gstin, setGstin] = useState(company?.gstin || '');
-  const [pan, setPan] = useState(company?.pan || '');
-  const [cin, setCin] = useState(company?.cin || '');
-  const [bankName, setBankName] = useState(company?.bankName || '');
-  const [accountNo, setAccountNo] = useState(company?.accountNo || '');
-  const [ifscCode, setIfscCode] = useState(company?.ifscCode || '');
-  const [upiId, setUpiId] = useState(company?.upiId || '');
+  const [name, setName] = useState('');
+  const [tagline, setTagline] = useState('');
+  const [address, setAddress] = useState('');
+  const [cityState, setCityState] = useState('');
+  const [pincode, setPincode] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [website, setWebsite] = useState('');
+  const [gstin, setGstin] = useState('');
+  const [pan, setPan] = useState('');
+  const [cin, setCin] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [accountNo, setAccountNo] = useState('');
+  const [ifscCode, setIfscCode] = useState('');
+  const [upiId, setUpiId] = useState('');
+
+  useEffect(() => {
+    if (company) {
+      setName(company.name || '');
+      setTagline(company.tagline || '');
+      setAddress(company.address || '');
+      setCityState(company.cityState || '');
+      setPincode(company.pincode || '');
+      setPhone(company.phone || '');
+      setEmail(company.email || '');
+      setWebsite(company.website || '');
+      setGstin(company.gstin || '');
+      setPan(company.pan || '');
+      setCin(company.cin || '');
+      setBankName(company.bankName || '');
+      setAccountNo(company.accountNo || '');
+      setIfscCode(company.ifscCode || '');
+      setUpiId(company.upiId || '');
+    }
+  }, [company]);
+
+  const activeTenantId = session?.tenantId || session?.tenant?.id || 't_main';
 
   const handleSaveCompany = async () => {
     try {
-      await fetch('/api/company', {
+      const res = await fetch('/api/company', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-tenant-id': activeTenantId
+        },
         body: JSON.stringify({
           name, tagline, address, cityState, pincode, phone, email, website,
           gstin, pan, cin, bankName, accountNo, ifscCode, upiId
         })
       });
-      addToast('success', 'Company Profile & Invoice Header updated successfully!');
-      setShowEditModal(false);
-      await refreshData();
+      if (res.ok) {
+        addToast('success', 'Company Profile & Invoice Header saved successfully!');
+        setShowEditModal(false);
+        await refreshData();
+      } else {
+        addToast('error', 'Failed to save company profile');
+      }
     } catch (err) {
       addToast('error', 'Failed to update company profile');
     }
@@ -54,21 +83,21 @@ export const CompanyPage: React.FC = () => {
         </div>
         <button
           onClick={() => {
-            setName(company.name);
-            setTagline(company.tagline);
-            setAddress(company.address);
-            setCityState(company.cityState);
-            setPincode(company.pincode);
-            setPhone(company.phone);
-            setEmail(company.email);
-            setWebsite(company.website);
-            setGstin(company.gstin);
-            setPan(company.pan);
-            setCin(company.cin);
-            setBankName(company.bankName);
-            setAccountNo(company.accountNo);
-            setIfscCode(company.ifscCode);
-            setUpiId(company.upiId);
+            setName(company.name || '');
+            setTagline(company.tagline || '');
+            setAddress(company.address || '');
+            setCityState(company.cityState || '');
+            setPincode(company.pincode || '');
+            setPhone(company.phone || '');
+            setEmail(company.email || '');
+            setWebsite(company.website || '');
+            setGstin(company.gstin || '');
+            setPan(company.pan || '');
+            setCin(company.cin || '');
+            setBankName(company.bankName || '');
+            setAccountNo(company.accountNo || '');
+            setIfscCode(company.ifscCode || '');
+            setUpiId(company.upiId || '');
             setShowEditModal(true);
           }}
           className="flex items-center space-x-2 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-brand-600/30 transition cursor-pointer"

@@ -85,6 +85,7 @@ export const ERPProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  const activeTenantId = session?.tenantId || session?.tenant?.id || 't_main';
   const tenantFeatures: TenantFeatureToggles = session?.tenant?.features || defaultFeatures;
 
   const addToast = (type: 'success' | 'error' | 'info' | 'warning', message: string) => {
@@ -125,17 +126,21 @@ export const ERPProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const refreshData = async () => {
     try {
+      const headers = {
+        'x-tenant-id': activeTenantId
+      };
+
       const [compRes, branchRes, prodRes, custRes, suppRes, salesRes, purRes, godownRes, logRes, dashRes] = await Promise.all([
-        fetch('/api/company').then(r => r.json()),
-        fetch('/api/branches').then(r => r.json()),
-        fetch(`/api/products?role=${currentRole}`).then(r => r.json()),
-        fetch('/api/customers').then(r => r.json()),
-        fetch('/api/suppliers').then(r => r.json()),
-        fetch('/api/sales').then(r => r.json()),
-        fetch('/api/purchases').then(r => r.json()),
-        fetch('/api/godowns').then(r => r.json()),
-        fetch('/api/audit-logs').then(r => r.json()),
-        fetch('/api/dashboard').then(r => r.json())
+        fetch('/api/company', { headers }).then(r => r.json()),
+        fetch('/api/branches', { headers }).then(r => r.json()),
+        fetch(`/api/products?role=${currentRole}`, { headers }).then(r => r.json()),
+        fetch('/api/customers', { headers }).then(r => r.json()),
+        fetch('/api/suppliers', { headers }).then(r => r.json()),
+        fetch('/api/sales', { headers }).then(r => r.json()),
+        fetch('/api/purchases', { headers }).then(r => r.json()),
+        fetch('/api/godowns', { headers }).then(r => r.json()),
+        fetch('/api/audit-logs', { headers }).then(r => r.json()),
+        fetch('/api/dashboard', { headers }).then(r => r.json())
       ]);
 
       setCompany(compRes);
@@ -166,6 +171,7 @@ export const ERPProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
+          'x-tenant-id': activeTenantId,
           'x-user-name': session?.name || (currentRole === 'OWNER' ? 'Rajesh Sharma (Owner)' : 'Suresh Patil (Sales)')
         },
         body: JSON.stringify(invoiceData)
@@ -186,7 +192,8 @@ export const ERPProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-user-name': 'Vikram Mehta (Purchase Mgr)'
+          'x-tenant-id': activeTenantId,
+          'x-user-name': 'Purchase Agent'
         },
         body: JSON.stringify(billData)
       });
@@ -213,7 +220,8 @@ export const ERPProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-user-name': 'Rajesh Sharma (Owner)'
+          'x-tenant-id': activeTenantId,
+          'x-user-name': 'Owner'
         },
         body: JSON.stringify({ billId, otp })
       });
@@ -237,7 +245,10 @@ export const ERPProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const res = await fetch(`/api/sales/convert/${id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-tenant-id': activeTenantId
+        },
         body: JSON.stringify({ targetDocType })
       });
       const data = await res.json();

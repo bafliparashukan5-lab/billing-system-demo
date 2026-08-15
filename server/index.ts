@@ -12,6 +12,11 @@ const DEFAULT_PORT = Number(process.env.PORT) || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Helper middleware to extract tenantId from request header
+const getTenantId = (req: express.Request): string => {
+  return (req.headers['x-tenant-id'] as string) || 't_main';
+};
+
 // --- Authentication API ---
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body;
@@ -51,9 +56,14 @@ app.post('/api/superadmin/tenants/:id/features', (req, res) => {
   res.json(tenant);
 });
 
-// --- 1. Dynamic Dashboard Metrics & Graph API ---
+// --- 1. Dynamic Dashboard Metrics & Graph API (Tenant Isolated) ---
 app.get('/api/dashboard', (req, res) => {
-  const metrics = dbStore.getDashboardMetrics();
+  const tid = getTenantId(req);
+  const metrics = dbStore.getDashboardMetrics(tid);
+  const tenantInvoices = dbStore.getSalesInvoicesForTenant(tid);
+  const tenantPurchases = dbStore.getPurchaseBillsForTenant(tid);
+  const tenantProducts = dbStore.getProductsForTenant(tid);
+  const tenantAuditLogs = dbStore.getAuditLogsForTenant(tid);
   
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const currentMonthIdx = new Date().getMonth();
@@ -62,12 +72,12 @@ app.get('/api/dashboard', (req, res) => {
     const idx = (currentMonthIdx - 5 + offset + 12) % 12;
     const monthName = monthNames[idx];
     
-    const monthlyInvoices = dbStore.salesInvoices.filter(i => {
+    const monthlyInvoices = tenantInvoices.filter(i => {
       const d = new Date(i.invoiceDate);
       return d.getMonth() === idx;
     });
 
-    const monthlyPurchases = dbStore.purchaseBills.filter(b => {
+    const monthlyPurchases = tenantPurchases.filter(b => {
       const d = new Date(b.billDate);
       return d.getMonth() === idx && b.status === 'POSTED';
     });
@@ -80,7 +90,7 @@ app.get('/api/dashboard', (req, res) => {
   });
 
   const categoryMap: { [cat: string]: number } = {};
-  dbStore.products.forEach(p => {
+  tenantProducts.forEach(p => {
     categoryMap[p.category || 'General'] = (categoryMap[p.category || 'General'] || 0) + 1;
   });
 
@@ -92,19 +102,21 @@ app.get('/api/dashboard', (req, res) => {
     metrics,
     salesGraph,
     categoryDistribution,
-    recentInvoices: dbStore.salesInvoices.slice(0, 5),
-    recentAuditLogs: dbStore.auditLogs.slice(0, 5),
-    lowStockProducts: dbStore.products.filter(p => p.currentStock <= p.minReorderLevel)
+    recentInvoices: tenantInvoices.slice(0, 5),
+    recentAuditLogs: tenantAuditLogs.slice(0, 5),
+    lowStockProducts: tenantProducts.filter(p => p.currentStock <= p.minReorderLevel)
   });
 });
 
-// --- 2. Company & Branch API (With Disk Persistence) ---
+// --- 2. Company & Branch API (Per Tenant Isolated) ---
 app.get('/api/company', (req, res) => {
-  res.json(dbStore.company);
+  const tid = getTenantId(req);
+  res.json(dbStore.getTenantCompany(tid));
 });
 
 app.post('/api/company', (req, res) => {
-  const updatedCompany = dbStore.updateCompanyProfile(req.body);
+  const tid = getTenantId(req);
+  const updatedCompany = dbStore.updateCompanyProfile(tid, req.body);
   res.json(updatedCompany);
 });
 
@@ -112,11 +124,13 @@ app.get('/api/branches', (req, res) => {
   res.json(dbStore.branches);
 });
 
-// --- 3. Master Data API ---
+// --- 3. Master Data API (Tenant Isolated) ---
 app.get('/api/products', (req, res) => {
+  const tid = getTenantId(req);
   const role = (req.query.role as string) || 'ADMIN';
-  
-  const sanitizedProducts = dbStore.products.map(p => {
+  const tenantProducts = dbStore.getProductsForTenant(tid);
+
+  const sanitizedProducts = tenantProducts.map(p => {
     if (role === 'SALES' || role === 'CASHIER') {
       return {
         ...p,
@@ -133,78 +147,101 @@ app.get('/api/products', (req, res) => {
 });
 
 app.post('/api/products', (req, res) => {
+  const tid = getTenantId(req);
   const body = req.body;
+  const tenantProducts = dbStore.getProductsForTenant(tid);
+
   const newProduct = {
     ...body,
     id: 'p_' + Date.now(),
-    code: body.code || 'PRD-' + (dbStore.products.length + 1),
+    tenantId: tid,
+    code: body.code || 'PRD-' + String(tenantProducts.length + 1).padStart(3, '0'),
     openingStock: Number(body.openingStock || 0),
     currentStock: Number(body.openingStock || 0),
     minReorderLevel: Number(body.minReorderLevel || 5),
     maxStockLevel: Number(body.maxStockLevel || 100)
   };
+
   dbStore.products.unshift(newProduct);
-  dbStore.logAudit('ADMIN', 'Admin User', 'ADD_PRODUCT', 'Master Data', `Added Product ${newProduct.name} (${newProduct.code})`);
+  dbStore.logAudit('ADMIN', 'Admin User', 'ADD_PRODUCT', 'Master Data', `Added Product ${newProduct.name} (${newProduct.code})`, tid);
+  dbStore.saveToDisk();
+
   res.status(201).json(newProduct);
 });
 
 app.get('/api/customers', (req, res) => {
-  res.json(dbStore.customers);
+  const tid = getTenantId(req);
+  res.json(dbStore.getCustomersForTenant(tid));
 });
 
 app.post('/api/customers', (req, res) => {
+  const tid = getTenantId(req);
   const body = req.body;
+  const tenantCusts = dbStore.getCustomersForTenant(tid);
+
   const newCust = {
     ...body,
     id: 'c_' + Date.now(),
-    code: 'CUST-' + String(dbStore.customers.length + 1).padStart(3, '0'),
+    tenantId: tid,
+    code: 'CUST-' + String(tenantCusts.length + 1).padStart(3, '0'),
     openingBalance: Number(body.openingBalance || 0),
     currentBalance: Number(body.openingBalance || 0),
     active: true
   };
+
   dbStore.customers.unshift(newCust);
-  dbStore.logAudit('ADMIN', 'Admin User', 'ADD_CUSTOMER', 'Master Data', `Added Customer ${newCust.name} (${newCust.code})`);
+  dbStore.logAudit('ADMIN', 'Admin User', 'ADD_CUSTOMER', 'Master Data', `Added Customer ${newCust.name} (${newCust.code})`, tid);
+  dbStore.saveToDisk();
+
   res.status(201).json(newCust);
 });
 
 app.get('/api/suppliers', (req, res) => {
-  res.json(dbStore.suppliers);
+  const tid = getTenantId(req);
+  res.json(dbStore.getSuppliersForTenant(tid));
 });
 
 app.post('/api/suppliers', (req, res) => {
+  const tid = getTenantId(req);
   const body = req.body;
+  const tenantSupps = dbStore.getSuppliersForTenant(tid);
+
   const newSupp = {
     ...body,
     id: 's_' + Date.now(),
-    code: 'SUP-' + String(dbStore.suppliers.length + 1).padStart(3, '0'),
+    tenantId: tid,
+    code: 'SUP-' + String(tenantSupps.length + 1).padStart(3, '0'),
     openingBalance: Number(body.openingBalance || 0),
     currentBalance: Number(body.openingBalance || 0),
     active: true
   };
+
   dbStore.suppliers.unshift(newSupp);
-  dbStore.logAudit('ADMIN', 'Admin User', 'ADD_SUPPLIER', 'Master Data', `Added Supplier ${newSupp.name} (${newSupp.code})`);
+  dbStore.logAudit('ADMIN', 'Admin User', 'ADD_SUPPLIER', 'Master Data', `Added Supplier ${newSupp.name} (${newSupp.code})`, tid);
+  dbStore.saveToDisk();
+
   res.status(201).json(newSupp);
 });
 
-// --- 4. Sales Workflow & POS API ---
+// --- 4. Sales Workflow & POS API (Tenant Isolated) ---
 app.get('/api/sales', (req, res) => {
+  const tid = getTenantId(req);
   const docType = req.query.docType as string;
-  if (docType) {
-    return res.json(dbStore.salesInvoices.filter(i => i.docType === docType));
-  }
-  res.json(dbStore.salesInvoices);
+  res.json(dbStore.getSalesInvoicesForTenant(tid, docType));
 });
 
 app.post('/api/sales', (req, res) => {
+  const tid = getTenantId(req);
   const userName = (req.headers['x-user-name'] as string) || 'Salesperson';
-  const invoice = dbStore.createSalesInvoice(req.body, userName);
+  const invoice = dbStore.createSalesInvoice(req.body, userName, tid);
   res.status(201).json(invoice);
 });
 
 app.post('/api/sales/convert/:id', (req, res) => {
+  const tid = getTenantId(req);
   const { id } = req.params;
   const { targetDocType } = req.body;
-  const original = dbStore.salesInvoices.find(i => i.id === id);
+  const original = dbStore.salesInvoices.find(i => i.id === id && (i.tenantId || 't_main') === tid);
 
   if (!original) {
     return res.status(404).json({ message: 'Document not found' });
@@ -215,49 +252,59 @@ app.post('/api/sales/convert/:id', (req, res) => {
     docType: targetDocType || 'SALES_INVOICE',
     refQuotationNo: original.docType === 'QUOTATION' ? original.invoiceNumber : undefined,
     refOrderNo: original.docType === 'SALES_ORDER' ? original.invoiceNumber : undefined,
-    invoiceNumber: `INV-2026-${String(dbStore.salesInvoices.length + 1).padStart(3, '0')}`,
+    invoiceNumber: `INV-2026-${String(dbStore.getSalesInvoicesForTenant(tid).length + 1).padStart(3, '0')}`,
     invoiceDate: new Date().toISOString().split('T')[0]
-  }, 'Converted Flow');
+  }, 'Converted Flow', tid);
 
   original.status = 'ACCEPTED';
+  dbStore.saveToDisk();
   res.json({ original, converted });
 });
 
-// --- 5. Purchase & Owner OTP Approval API ---
+// --- 5. Purchase & Owner OTP Approval API (Tenant Isolated) ---
 app.get('/api/purchases', (req, res) => {
-  res.json(dbStore.purchaseBills);
+  const tid = getTenantId(req);
+  res.json(dbStore.getPurchaseBillsForTenant(tid));
 });
 
 app.post('/api/purchases', (req, res) => {
+  const tid = getTenantId(req);
   const userName = (req.headers['x-user-name'] as string) || 'Purchase Agent';
-  const bill = dbStore.createPurchaseBill(req.body, userName);
+  const bill = dbStore.createPurchaseBill(req.body, userName, tid);
   res.status(201).json(bill);
 });
 
 app.post('/api/purchases/verify-otp', (req, res) => {
+  const tid = getTenantId(req);
   const { billId, otp } = req.body;
   const userName = (req.headers['x-user-name'] as string) || 'Owner';
-  const result = dbStore.verifyOwnerOtpAndPost(billId, otp, userName);
+  const result = dbStore.verifyOwnerOtpAndPost(billId, otp, userName, tid);
   if (!result.success) {
     return res.status(400).json(result);
   }
   res.json(result);
 });
 
-// --- 6. Inventory & Godown Transfers API ---
+// --- 6. Inventory & Godown Transfers API (Tenant Isolated) ---
 app.get('/api/godowns', (req, res) => {
-  res.json(dbStore.godowns);
+  const tid = getTenantId(req);
+  res.json(dbStore.getGodownsForTenant(tid));
 });
 
 app.get('/api/inventory/transfers', (req, res) => {
-  res.json(dbStore.stockTransfers);
+  const tid = getTenantId(req);
+  res.json(dbStore.getStockTransfersForTenant(tid));
 });
 
 app.post('/api/inventory/transfers', (req, res) => {
+  const tid = getTenantId(req);
   const { fromGodownId, toGodownId, productId, quantity } = req.body;
-  const fromG = dbStore.godowns.find(g => g.id === fromGodownId);
-  const toG = dbStore.godowns.find(g => g.id === toGodownId);
-  const prod = dbStore.products.find(p => p.id === productId);
+  const tenantGodowns = dbStore.getGodownsForTenant(tid);
+  const tenantProducts = dbStore.getProductsForTenant(tid);
+
+  const fromG = tenantGodowns.find(g => g.id === fromGodownId);
+  const toG = tenantGodowns.find(g => g.id === toGodownId);
+  const prod = tenantProducts.find(p => p.id === productId);
 
   if (!fromG || !toG || !prod) {
     return res.status(400).json({ message: 'Invalid Godown or Product ID' });
@@ -265,7 +312,8 @@ app.post('/api/inventory/transfers', (req, res) => {
 
   const transfer: any = {
     id: 'st_' + Date.now(),
-    transferNo: 'TRF-2026-' + String(dbStore.stockTransfers.length + 1).padStart(3, '0'),
+    tenantId: tid,
+    transferNo: 'TRF-2026-' + String(dbStore.getStockTransfersForTenant(tid).length + 1).padStart(3, '0'),
     date: new Date().toISOString().split('T')[0],
     fromGodownId,
     fromGodownName: fromG.name,
@@ -279,25 +327,34 @@ app.post('/api/inventory/transfers', (req, res) => {
   };
 
   dbStore.stockTransfers.unshift(transfer);
-  dbStore.logAudit('INVENTORY', 'Inventory Manager', 'STOCK_TRANSFER', 'Inventory', `Transferred ${quantity} ${prod.unit} of ${prod.name} from ${fromG.name} to ${toG.name}`);
+  dbStore.logAudit('INVENTORY', 'Inventory Manager', 'STOCK_TRANSFER', 'Inventory', `Transferred ${quantity} ${prod.unit} of ${prod.name} from ${fromG.name} to ${toG.name}`, tid);
+  dbStore.saveToDisk();
+
   res.status(201).json(transfer);
 });
 
-// --- 7. Accounting & Ledgers API ---
+// --- 7. Accounting & Ledgers API (Tenant Isolated) ---
 app.get('/api/accounts/vouchers', (req, res) => {
-  res.json(dbStore.ledgerVouchers);
+  const tid = getTenantId(req);
+  res.json(dbStore.getLedgerVouchersForTenant(tid));
 });
 
 app.get('/api/accounts/ledgers', (req, res) => {
-  res.json(dbStore.ledgerAccounts);
+  const tid = getTenantId(req);
+  res.json(dbStore.getLedgerAccountsForTenant(tid));
 });
 
-// --- 8. GST & Statutory Reports API ---
+// --- 8. GST & Statutory Reports API (Tenant Isolated) ---
 app.get('/api/gst/reports', (req, res) => {
+  const tid = getTenantId(req);
+  const tenantInvoices = dbStore.getSalesInvoicesForTenant(tid);
+  const tenantPurchases = dbStore.getPurchaseBillsForTenant(tid);
+  const tenantProducts = dbStore.getProductsForTenant(tid);
+
   const gstr1 = {
-    b2bInvoices: dbStore.salesInvoices.filter(i => i.customerGstin !== 'UNREGISTERED'),
-    b2cInvoices: dbStore.salesInvoices.filter(i => i.customerGstin === 'UNREGISTERED'),
-    hsnSummary: dbStore.products.map(p => ({
+    b2bInvoices: tenantInvoices.filter(i => i.customerGstin !== 'UNREGISTERED'),
+    b2cInvoices: tenantInvoices.filter(i => i.customerGstin === 'UNREGISTERED'),
+    hsnSummary: tenantProducts.map(p => ({
       hsnSac: p.hsnSac,
       description: p.name,
       totalQty: p.openingStock - p.currentStock,
@@ -307,32 +364,37 @@ app.get('/api/gst/reports', (req, res) => {
   };
 
   const gstr3b = {
-    outwardTaxable: dbStore.salesInvoices.reduce((acc, i) => acc + i.totalTaxable, 0),
-    cgstOutput: dbStore.salesInvoices.reduce((acc, i) => acc + i.totalCGST, 0),
-    sgstOutput: dbStore.salesInvoices.reduce((acc, i) => acc + i.totalSGST, 0),
-    igstOutput: dbStore.salesInvoices.reduce((acc, i) => acc + i.totalIGST, 0),
-    itcAvailableCgst: dbStore.purchaseBills.filter(b => b.status === 'POSTED').reduce((acc, b) => acc + b.totalCGST, 0),
-    itcAvailableSgst: dbStore.purchaseBills.filter(b => b.status === 'POSTED').reduce((acc, b) => acc + b.totalSGST, 0),
+    outwardTaxable: tenantInvoices.reduce((acc, i) => acc + i.totalTaxable, 0),
+    cgstOutput: tenantInvoices.reduce((acc, i) => acc + i.totalCGST, 0),
+    sgstOutput: tenantInvoices.reduce((acc, i) => acc + i.totalSGST, 0),
+    igstOutput: tenantInvoices.reduce((acc, i) => acc + i.totalIGST, 0),
+    itcAvailableCgst: tenantPurchases.filter(b => b.status === 'POSTED').reduce((acc, b) => acc + b.totalCGST, 0),
+    itcAvailableSgst: tenantPurchases.filter(b => b.status === 'POSTED').reduce((acc, b) => acc + b.totalSGST, 0),
   };
 
   res.json({ gstr1, gstr3b });
 });
 
-// --- 9. Audit Logs & System Activity API ---
+// --- 9. Audit Logs & System Activity API (Tenant Isolated) ---
 app.get('/api/audit-logs', (req, res) => {
-  res.json(dbStore.auditLogs);
+  const tid = getTenantId(req);
+  res.json(dbStore.getAuditLogsForTenant(tid));
 });
 
-// --- 10. BI Analytics & AI Forecast API ---
+// --- 10. BI Analytics & AI Forecast API (Tenant Isolated) ---
 app.get('/api/analytics', (req, res) => {
+  const tid = getTenantId(req);
+  const tenantProducts = dbStore.getProductsForTenant(tid);
+  const tenantCustomers = dbStore.getCustomersForTenant(tid);
+
   res.json({
-    aiInsights: dbStore.products.length === 0 ? [
+    aiInsights: tenantProducts.length === 0 ? [
       { type: 'INFO', title: 'System Ready for Data Input', description: 'Add your products in Product Master to generate automated profit margin & stock reorder warnings.' }
     ] : [
-      { type: 'PROFIT', title: 'Margin Analysis Active', description: `${dbStore.products[0].name} configured with ₹${dbStore.products[0].rates.retailRate} retail price.` }
+      { type: 'PROFIT', title: 'Margin Analysis Active', description: `${tenantProducts[0].name} configured with ₹${tenantProducts[0].rates.retailRate} retail price.` }
     ],
-    topCustomers: dbStore.customers.slice(0, 3),
-    fastMovingProducts: dbStore.products.filter(p => p.currentStock < p.openingStock)
+    topCustomers: tenantCustomers.slice(0, 3),
+    fastMovingProducts: tenantProducts.filter(p => p.currentStock < p.openingStock)
   });
 });
 

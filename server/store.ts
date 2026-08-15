@@ -9,8 +9,34 @@ import {
 const DATA_DIR = path.resolve(process.cwd(), 'server', 'data');
 const DB_FILE = path.join(DATA_DIR, 'store.json');
 
+const DEFAULT_COMPANY_TEMPLATE: Company = {
+  name: 'Apex ERP Business',
+  logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=60',
+  tagline: 'Enterprise Billing & Management',
+  address: 'Headquarters Address',
+  cityState: 'Mumbai, Maharashtra',
+  pincode: '400001',
+  phone: '+91 98765 43210',
+  email: 'contact@apexerp.com',
+  website: 'www.apexerp.com',
+  gstin: '27AAACA1234A1Z5',
+  pan: 'AAACA1234A',
+  cin: 'U72200MH2021PTC350000',
+  bankName: 'HDFC Bank Ltd',
+  accountNo: '50200048291045',
+  ifscCode: 'HDFC0000240',
+  branchName: 'Main Branch, Mumbai',
+  upiId: 'apexerp@hdfcbank',
+  currencySymbol: '₹',
+  termsAndConditions: [
+    '1. Goods once sold will not be taken back without valid return approval.',
+    '2. Interest @ 18% p.a. will be charged on overdue payments exceeding credit terms.',
+    '3. All disputes subject to Mumbai Jurisdiction only.'
+  ]
+};
+
 class ERPDataStore {
-  company: Company;
+  tenantCompanies: { [tenantId: string]: Company };
   branches: Branch[];
   users: User[];
   tenants: Tenant[];
@@ -30,7 +56,6 @@ class ERPDataStore {
   constructor() {
     this.ownerOtpCode = process.env.OWNER_OTP_DEFAULT || '889900';
 
-    // Defaults
     this.tenants = [
       {
         id: 't_main',
@@ -56,42 +81,20 @@ class ERPDataStore {
       }
     ];
 
-    this.company = {
-      name: 'Apex ERP Technologies Pvt Ltd',
-      logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=60',
-      tagline: 'Complete Enterprise Billing & Inventory System',
-      address: 'Corporate Headquarters',
-      cityState: 'Mumbai, Maharashtra',
-      pincode: '400001',
-      phone: '+91 98765 43210',
-      email: 'contact@apexerp.com',
-      website: 'www.apexerp.com',
-      gstin: '27AAACA1234A1Z5',
-      pan: 'AAACA1234A',
-      cin: 'U72200MH2021PTC350000',
-      bankName: 'HDFC Bank Ltd',
-      accountNo: '50200048291045',
-      ifscCode: 'HDFC0000240',
-      branchName: 'Main Branch, Mumbai',
-      upiId: 'apexerp@hdfcbank',
-      currencySymbol: '₹',
-      termsAndConditions: [
-        '1. Goods once sold will not be taken back without valid return approval.',
-        '2. Interest @ 18% p.a. will be charged on overdue payments exceeding credit terms.',
-        '3. All disputes subject to Mumbai Jurisdiction only.'
-      ]
+    this.tenantCompanies = {
+      't_main': { ...DEFAULT_COMPANY_TEMPLATE, tenantId: 't_main', name: 'Apex ERP Technologies Pvt Ltd' }
     };
 
     this.branches = [
-      { id: 'b1', code: 'BR-MAIN', name: 'Main Branch - Head Office', address: 'Headquarters', phone: '+91 98765 43210', gstin: '27AAACA1234A1Z5', isMain: true }
+      { id: 'b1', tenantId: 't_main', code: 'BR-MAIN', name: 'Main Branch - Head Office', address: 'Headquarters', phone: '+91 98765 43210', gstin: '27AAACA1234A1Z5', isMain: true }
     ];
 
     this.users = [
-      { id: 'u1', name: 'System Owner', email: 'owner@apexerp.com', role: 'OWNER' }
+      { id: 'u1', tenantId: 't_main', name: 'System Owner', email: 'owner@apexerp.com', role: 'OWNER' }
     ];
 
     this.godowns = [
-      { id: 'g1', code: 'GDN-MAIN', name: 'Main Warehouse Godown', location: 'Central Logistics Hub', capacity: '10,000 Sq.Ft' }
+      { id: 'g1', tenantId: 't_main', code: 'GDN-MAIN', name: 'Main Warehouse Godown', location: 'Central Logistics Hub', capacity: '10,000 Sq.Ft' }
     ];
 
     this.products = [];
@@ -105,33 +108,32 @@ class ERPDataStore {
     this.auditLogs = [];
 
     this.ledgerAccounts = [
-      { id: 'la1', code: '1001', name: 'Cash Account (Counter)', group: 'ASSET', balance: 0, debitCredit: 'Dr' },
-      { id: 'la2', code: '1002', name: 'Operating Bank Account', group: 'ASSET', balance: 0, debitCredit: 'Dr' },
-      { id: 'la3', code: '1100', name: 'Trade Receivables (Sundry Debtors)', group: 'ASSET', balance: 0, debitCredit: 'Dr' },
-      { id: 'la4', code: '1200', name: 'Closing Merchandise Inventory', group: 'ASSET', balance: 0, debitCredit: 'Dr' },
-      { id: 'la5', code: '2001', name: 'Trade Payables (Sundry Creditors)', group: 'LIABILITY', balance: 0, debitCredit: 'Cr' },
-      { id: 'la6', code: '2101', name: 'CGST Output Payable', group: 'LIABILITY', balance: 0, debitCredit: 'Cr' },
-      { id: 'la7', code: '2102', name: 'SGST Output Payable', group: 'LIABILITY', balance: 0, debitCredit: 'Cr' },
-      { id: 'la8', code: '2103', name: 'IGST Output Payable', group: 'LIABILITY', balance: 0, debitCredit: 'Cr' },
-      { id: 'la9', code: '2104', name: 'CGST Input Tax Credit (ITC)', group: 'ASSET', balance: 0, debitCredit: 'Dr' },
-      { id: 'la10', code: '2105', name: 'SGST Input Tax Credit (ITC)', group: 'ASSET', balance: 0, debitCredit: 'Dr' },
-      { id: 'la11', code: '3001', name: 'Sales Account (Domestic)', group: 'INCOME', balance: 0, debitCredit: 'Cr' },
-      { id: 'la12', code: '4001', name: 'Purchase Account', group: 'EXPENSE', balance: 0, debitCredit: 'Dr' }
+      { id: 'la1', tenantId: 't_main', code: '1001', name: 'Cash Account (Counter)', group: 'ASSET', balance: 0, debitCredit: 'Dr' },
+      { id: 'la2', tenantId: 't_main', code: '1002', name: 'Operating Bank Account', group: 'ASSET', balance: 0, debitCredit: 'Dr' },
+      { id: 'la3', tenantId: 't_main', code: '1100', name: 'Trade Receivables (Sundry Debtors)', group: 'ASSET', balance: 0, debitCredit: 'Dr' },
+      { id: 'la4', tenantId: 't_main', code: '1200', name: 'Closing Merchandise Inventory', group: 'ASSET', balance: 0, debitCredit: 'Dr' },
+      { id: 'la5', tenantId: 't_main', code: '2001', name: 'Trade Payables (Sundry Creditors)', group: 'LIABILITY', balance: 0, debitCredit: 'Cr' },
+      { id: 'la6', tenantId: 't_main', code: '2101', name: 'CGST Output Payable', group: 'LIABILITY', balance: 0, debitCredit: 'Cr' },
+      { id: 'la7', tenantId: 't_main', code: '2102', name: 'SGST Output Payable', group: 'LIABILITY', balance: 0, debitCredit: 'Cr' },
+      { id: 'la8', tenantId: 't_main', code: '2103', name: 'IGST Output Payable', group: 'LIABILITY', balance: 0, debitCredit: 'Cr' },
+      { id: 'la9', tenantId: 't_main', code: '2104', name: 'CGST Input Tax Credit (ITC)', group: 'ASSET', balance: 0, debitCredit: 'Dr' },
+      { id: 'la10', tenantId: 't_main', code: '2105', name: 'SGST Input Tax Credit (ITC)', group: 'ASSET', balance: 0, debitCredit: 'Dr' },
+      { id: 'la11', tenantId: 't_main', code: '3001', name: 'Sales Account (Domestic)', group: 'INCOME', balance: 0, debitCredit: 'Cr' },
+      { id: 'la12', tenantId: 't_main', code: '4001', name: 'Purchase Account', group: 'EXPENSE', balance: 0, debitCredit: 'Dr' }
     ];
 
-    // Load persisted store from disk if exists
     this.loadFromDisk();
   }
 
   // --- Persistence Handlers ---
 
-  private saveToDisk() {
+  saveToDisk() {
     try {
       if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
       }
       const dataToSave = {
-        company: this.company,
+        tenantCompanies: this.tenantCompanies,
         branches: this.branches,
         tenants: this.tenants,
         products: this.products,
@@ -157,7 +159,7 @@ class ERPDataStore {
       if (fs.existsSync(DB_FILE)) {
         const fileData = fs.readFileSync(DB_FILE, 'utf-8');
         const parsed = JSON.parse(fileData);
-        if (parsed.company) this.company = parsed.company;
+        if (parsed.tenantCompanies) this.tenantCompanies = parsed.tenantCompanies;
         if (parsed.branches) this.branches = parsed.branches;
         if (parsed.tenants) this.tenants = parsed.tenants;
         if (parsed.products) this.products = parsed.products;
@@ -178,11 +180,111 @@ class ERPDataStore {
     }
   }
 
+  // --- Multi-Tenant Helper Filters ---
+
+  getTenantCompany(tenantId?: string): Company {
+    const tid = tenantId || 't_main';
+    if (!this.tenantCompanies[tid]) {
+      const tenant = this.tenants.find(t => t.id === tid);
+      this.tenantCompanies[tid] = {
+        ...DEFAULT_COMPANY_TEMPLATE,
+        tenantId: tid,
+        name: tenant?.companyName || 'Apex ERP Enterprise',
+        email: tenant?.email || 'contact@apexerp.com',
+        phone: tenant?.phone || '+91 98765 43210',
+        gstin: tenant?.gstin || '27AAACA1234A1Z5'
+      };
+    }
+    return this.tenantCompanies[tid];
+  }
+
+  updateCompanyProfile(tenantId: string | undefined, data: Partial<Company>): Company {
+    const tid = tenantId || 't_main';
+    const current = this.getTenantCompany(tid);
+    this.tenantCompanies[tid] = {
+      ...current,
+      ...data,
+      tenantId: tid
+    };
+    this.logAudit('OWNER', 'Company Admin', 'UPDATE_COMPANY_PROFILE', 'Company', `Updated company profile & bank details for tenant ${tid}`, tid);
+    this.saveToDisk();
+    return this.tenantCompanies[tid];
+  }
+
+  getProductsForTenant(tenantId?: string): Product[] {
+    const tid = tenantId || 't_main';
+    return this.products.filter(p => (p.tenantId || 't_main') === tid);
+  }
+
+  getCustomersForTenant(tenantId?: string): Customer[] {
+    const tid = tenantId || 't_main';
+    return this.customers.filter(c => (c.tenantId || 't_main') === tid);
+  }
+
+  getSuppliersForTenant(tenantId?: string): Supplier[] {
+    const tid = tenantId || 't_main';
+    return this.suppliers.filter(s => (s.tenantId || 't_main') === tid);
+  }
+
+  getSalesInvoicesForTenant(tenantId?: string, docType?: string): SalesInvoice[] {
+    const tid = tenantId || 't_main';
+    const list = this.salesInvoices.filter(i => (i.tenantId || 't_main') === tid);
+    if (docType) {
+      return list.filter(i => i.docType === docType);
+    }
+    return list;
+  }
+
+  getPurchaseBillsForTenant(tenantId?: string): PurchaseBill[] {
+    const tid = tenantId || 't_main';
+    return this.purchaseBills.filter(b => (b.tenantId || 't_main') === tid);
+  }
+
+  getGodownsForTenant(tenantId?: string): Godown[] {
+    const tid = tenantId || 't_main';
+    const list = this.godowns.filter(g => (g.tenantId || 't_main') === tid);
+    if (list.length === 0) {
+      const defaultGodown: Godown = {
+        id: 'g_' + tid,
+        tenantId: tid,
+        code: 'GDN-MAIN',
+        name: 'Main Warehouse Godown',
+        location: 'Central Logistics Hub',
+        capacity: '10,000 Sq.Ft'
+      };
+      this.godowns.unshift(defaultGodown);
+      this.saveToDisk();
+      return [defaultGodown];
+    }
+    return list;
+  }
+
+  getStockTransfersForTenant(tenantId?: string): StockTransfer[] {
+    const tid = tenantId || 't_main';
+    return this.stockTransfers.filter(t => (t.tenantId || 't_main') === tid);
+  }
+
+  getLedgerAccountsForTenant(tenantId?: string): LedgerAccount[] {
+    const tid = tenantId || 't_main';
+    return this.ledgerAccounts.filter(l => (l.tenantId || 't_main') === tid);
+  }
+
+  getLedgerVouchersForTenant(tenantId?: string): LedgerVoucher[] {
+    const tid = tenantId || 't_main';
+    return this.ledgerVouchers.filter(v => (v.tenantId || 't_main') === tid);
+  }
+
+  getAuditLogsForTenant(tenantId?: string): AuditLog[] {
+    const tid = tenantId || 't_main';
+    return this.auditLogs.filter(a => (a.tenantId || 't_main') === tid);
+  }
+
   // --- Super Admin SaaS Tenant Methods ---
 
   createTenant(data: Partial<Tenant>): Tenant {
+    const tid = 't_' + Date.now();
     const newTenant: Tenant = {
-      id: 't_' + Date.now(),
+      id: tid,
       code: 'TENANT-' + String(this.tenants.length + 1).padStart(3, '0'),
       companyName: data.companyName || 'New Client Enterprise',
       email: data.email || `client${this.tenants.length + 1}@apexerp.com`,
@@ -205,7 +307,27 @@ class ERPDataStore {
     };
 
     this.tenants.unshift(newTenant);
-    this.logAudit('SUPER_ADMIN', 'Super Admin', 'CREATE_TENANT', 'SaaS Admin', `Created Client Account ${newTenant.companyName} (${newTenant.email})`);
+    
+    // Initialize isolated company profile & main godown for new tenant
+    this.tenantCompanies[tid] = {
+      ...DEFAULT_COMPANY_TEMPLATE,
+      tenantId: tid,
+      name: newTenant.companyName,
+      email: newTenant.email,
+      phone: newTenant.phone,
+      gstin: newTenant.gstin
+    };
+
+    this.godowns.unshift({
+      id: 'g_' + tid,
+      tenantId: tid,
+      code: 'GDN-MAIN',
+      name: 'Main Warehouse Godown',
+      location: 'Central Logistics Hub',
+      capacity: '10,000 Sq.Ft'
+    });
+
+    this.logAudit('SUPER_ADMIN', 'Super Admin', 'CREATE_TENANT', 'SaaS Admin', `Created Client Account ${newTenant.companyName} (${newTenant.email})`, tid);
     this.saveToDisk();
     return newTenant;
   }
@@ -214,7 +336,7 @@ class ERPDataStore {
     const tenant = this.tenants.find(t => t.id === tenantId);
     if (tenant) {
       tenant.active = !tenant.active;
-      this.logAudit('SUPER_ADMIN', 'Super Admin', 'TOGGLE_TENANT_STATUS', 'SaaS Admin', `Set Client ${tenant.companyName} status to ${tenant.active ? 'ACTIVE' : 'DEACTIVATED'}`);
+      this.logAudit('SUPER_ADMIN', 'Super Admin', 'TOGGLE_TENANT_STATUS', 'SaaS Admin', `Set Client ${tenant.companyName} status to ${tenant.active ? 'ACTIVE' : 'DEACTIVATED'}`, tenantId);
       this.saveToDisk();
       return tenant;
     }
@@ -225,21 +347,11 @@ class ERPDataStore {
     const tenant = this.tenants.find(t => t.id === tenantId);
     if (tenant) {
       tenant.features = { ...tenant.features, ...features };
-      this.logAudit('SUPER_ADMIN', 'Super Admin', 'UPDATE_TENANT_FEATURES', 'SaaS Admin', `Updated feature matrix for ${tenant.companyName}`);
+      this.logAudit('SUPER_ADMIN', 'Super Admin', 'UPDATE_TENANT_FEATURES', 'SaaS Admin', `Updated feature matrix for ${tenant.companyName}`, tenantId);
       this.saveToDisk();
       return tenant;
     }
     return null;
-  }
-
-  updateCompanyProfile(data: Partial<Company>): Company {
-    this.company = {
-      ...this.company,
-      ...data
-    };
-    this.logAudit('OWNER', 'Company Admin', 'UPDATE_COMPANY_PROFILE', 'Company', 'Updated company profile, GSTIN & bank details');
-    this.saveToDisk();
-    return this.company;
   }
 
   // --- Auth Login Handler ---
@@ -269,7 +381,7 @@ class ERPDataStore {
         return { success: false, message: 'Your client account is DEACTIVATED by Super Admin! Please contact support.' };
       }
 
-      this.logAudit('OWNER', tenant.companyName, 'LOGIN_SUCCESS', 'Auth', `Client logged into ERP system (${tenant.email})`);
+      this.logAudit('OWNER', tenant.companyName, 'LOGIN_SUCCESS', 'Auth', `Client logged into ERP system (${tenant.email})`, tenant.id);
       this.saveToDisk();
       return {
         success: true,
@@ -288,9 +400,10 @@ class ERPDataStore {
     return { success: false, message: 'Invalid email or password.' };
   }
 
-  logAudit(userRole: string, userName: string, action: string, module: string, details: string) {
+  logAudit(userRole: string, userName: string, action: string, module: string, details: string, tenantId?: string) {
     const newLog: AuditLog = {
       id: 'al_' + Date.now(),
+      tenantId: tenantId || 't_main',
       timestamp: new Date().toISOString(),
       userRole,
       userName,
@@ -303,33 +416,40 @@ class ERPDataStore {
     this.saveToDisk();
   }
 
-  getDashboardMetrics(): DashboardMetrics {
-    const totalSales = this.salesInvoices
+  getDashboardMetrics(tenantId?: string): DashboardMetrics {
+    const tid = tenantId || 't_main';
+    const tenantInvoices = this.getSalesInvoicesForTenant(tid);
+    const tenantPurchases = this.getPurchaseBillsForTenant(tid);
+    const tenantProducts = this.getProductsForTenant(tid);
+    const tenantCustomers = this.getCustomersForTenant(tid);
+    const tenantSuppliers = this.getSuppliersForTenant(tid);
+
+    const totalSales = tenantInvoices
       .filter(i => i.docType === 'SALES_INVOICE' || i.docType === 'POS_RECEIPT')
       .reduce((acc, i) => acc + i.grandTotal, 0);
 
-    const todaysSales = this.salesInvoices
+    const todaysSales = tenantInvoices
       .filter(i => i.invoiceDate === new Date().toISOString().split('T')[0])
       .reduce((acc, i) => acc + i.grandTotal, 0);
 
-    const totalPurchases = this.purchaseBills
+    const totalPurchases = tenantPurchases
       .filter(b => b.status === 'POSTED')
       .reduce((acc, b) => acc + b.grandTotal, 0);
 
-    const receivables = this.customers.reduce((acc, c) => acc + c.currentBalance, 0);
-    const payables = this.suppliers.reduce((acc, s) => acc + s.currentBalance, 0);
+    const receivables = tenantCustomers.reduce((acc, c) => acc + c.currentBalance, 0);
+    const payables = tenantSuppliers.reduce((acc, s) => acc + s.currentBalance, 0);
 
-    const stockValue = this.products.reduce((acc, p) => acc + (p.currentStock * (p.rates?.purchaseCostRate || 0)), 0);
-    const lowStockCount = this.products.filter(p => p.currentStock <= p.minReorderLevel).length;
+    const stockValue = tenantProducts.reduce((acc, p) => acc + (p.currentStock * (p.rates?.purchaseCostRate || 0)), 0);
+    const lowStockCount = tenantProducts.filter(p => p.currentStock <= p.minReorderLevel).length;
 
-    const pendingQuotationsCount = this.salesInvoices.filter(i => i.docType === 'QUOTATION' && i.status === 'PENDING').length;
-    const pendingOrdersCount = this.salesInvoices.filter(i => i.docType === 'SALES_ORDER' && i.status === 'PENDING').length;
+    const pendingQuotationsCount = tenantInvoices.filter(i => i.docType === 'QUOTATION' && i.status === 'PENDING').length;
+    const pendingOrdersCount = tenantInvoices.filter(i => i.docType === 'SALES_ORDER' && i.status === 'PENDING').length;
 
     const grossProfit = totalSales * 0.20;
     const netProfit = grossProfit;
 
-    const gstPayable = this.salesInvoices.reduce((acc, i) => acc + i.totalCGST + i.totalSGST + i.totalIGST, 0);
-    const gstReceivable = this.purchaseBills.filter(b => b.status === 'POSTED').reduce((acc, b) => acc + b.totalCGST + b.totalSGST + b.totalIGST, 0);
+    const gstPayable = tenantInvoices.reduce((acc, i) => acc + i.totalCGST + i.totalSGST + i.totalIGST, 0);
+    const gstReceivable = tenantPurchases.filter(b => b.status === 'POSTED').reduce((acc, b) => acc + b.totalCGST + b.totalSGST + b.totalIGST, 0);
 
     return {
       totalSales,
@@ -350,7 +470,8 @@ class ERPDataStore {
     };
   }
 
-  createSalesInvoice(invoiceData: Partial<SalesInvoice>, userName: string = 'User'): SalesInvoice {
+  createSalesInvoice(invoiceData: Partial<SalesInvoice>, userName: string = 'User', tenantId?: string): SalesInvoice {
+    const tid = tenantId || 't_main';
     const isInterState = invoiceData.isInterState || false;
     
     let subTotal = 0;
@@ -386,7 +507,7 @@ class ERPDataStore {
       totalIGST += igst;
 
       if (invoiceData.docType === 'SALES_INVOICE' || invoiceData.docType === 'POS_RECEIPT') {
-        const prod = this.products.find(p => p.id === item.productId);
+        const prod = this.products.find(p => p.id === item.productId && (p.tenantId || 't_main') === tid);
         if (prod) {
           prod.currentStock = Math.max(0, prod.currentStock - item.quantity);
         }
@@ -408,12 +529,13 @@ class ERPDataStore {
     const grandTotal = Math.round(grandBeforeRound);
     const roundOff = Number((grandTotal - grandBeforeRound).toFixed(2));
 
-    const invoiceNum = invoiceData.invoiceNumber || `INV-2026-${String(this.salesInvoices.length + 1).padStart(3, '0')}`;
+    const invoiceNum = invoiceData.invoiceNumber || `INV-2026-${String(this.getSalesInvoicesForTenant(tid).length + 1).padStart(3, '0')}`;
     const paidAmt = invoiceData.paidAmount || (invoiceData.paymentMode === 'CASH' || invoiceData.paymentMode === 'UPI' ? grandTotal : 0);
     const dueAmt = Math.max(0, grandTotal - paidAmt);
 
     const newInvoice: SalesInvoice = {
       id: 'inv_' + Date.now(),
+      tenantId: tid,
       docType: invoiceData.docType || 'SALES_INVOICE',
       invoiceNumber: invoiceNum,
       invoiceDate: invoiceData.invoiceDate || new Date().toISOString().split('T')[0],
@@ -449,7 +571,7 @@ class ERPDataStore {
     this.salesInvoices.unshift(newInvoice);
 
     if (newInvoice.customerId) {
-      const cust = this.customers.find(c => c.id === newInvoice.customerId);
+      const cust = this.customers.find(c => c.id === newInvoice.customerId && (c.tenantId || 't_main') === tid);
       if (cust) {
         cust.currentBalance += dueAmt;
       }
@@ -457,6 +579,7 @@ class ERPDataStore {
 
     this.ledgerVouchers.unshift({
       id: 'v_' + Date.now(),
+      tenantId: tid,
       voucherNo: 'VCH-SLS-' + invoiceNum,
       date: newInvoice.invoiceDate,
       voucherType: 'SALES',
@@ -467,13 +590,14 @@ class ERPDataStore {
       referenceNo: invoiceNum
     });
 
-    this.logAudit('SALES', userName, 'CREATE_INVOICE', 'Sales', `Created ${newInvoice.docType} ${invoiceNum} for ${newInvoice.customerName} (₹${grandTotal})`);
+    this.logAudit('SALES', userName, 'CREATE_INVOICE', 'Sales', `Created ${newInvoice.docType} ${invoiceNum} for ${newInvoice.customerName} (₹${grandTotal})`, tid);
     this.saveToDisk();
 
     return newInvoice;
   }
 
-  createPurchaseBill(billData: Partial<PurchaseBill>, userName: string = 'User'): PurchaseBill {
+  createPurchaseBill(billData: Partial<PurchaseBill>, userName: string = 'User', tenantId?: string): PurchaseBill {
+    const tid = tenantId || 't_main';
     let subTotal = 0;
     let totalTaxable = 0;
     let totalCGST = 0;
@@ -501,11 +625,12 @@ class ERPDataStore {
     });
 
     const grandTotal = Math.round(totalTaxable + totalCGST + totalSGST);
-    const billNum = billData.billNumber || `PUR-2026-${String(this.purchaseBills.length + 1).padStart(3, '0')}`;
+    const billNum = billData.billNumber || `PUR-2026-${String(this.getPurchaseBillsForTenant(tid).length + 1).padStart(3, '0')}`;
     const requiresOwnerOtp = grandTotal >= 100000;
 
     const newBill: PurchaseBill = {
       id: 'pb_' + Date.now(),
+      tenantId: tid,
       billNumber: billNum,
       supplierInvoiceNo: billData.supplierInvoiceNo || 'SUP-INV-99',
       billDate: billData.billDate || new Date().toISOString().split('T')[0],
@@ -531,23 +656,24 @@ class ERPDataStore {
     if (!requiresOwnerOtp) {
       newBill.status = 'POSTED';
       newBill.postedAt = new Date().toISOString();
-      this.postPurchaseBillStockAndAccounts(newBill);
+      this.postPurchaseBillStockAndAccounts(newBill, tid);
     }
 
     this.purchaseBills.unshift(newBill);
-    this.logAudit('PURCHASE', userName, 'CREATE_PURCHASE', 'Purchase', `Created Purchase Bill ${billNum} for ${newBill.supplierName} (₹${grandTotal}) - Status: ${newBill.status}`);
+    this.logAudit('PURCHASE', userName, 'CREATE_PURCHASE', 'Purchase', `Created Purchase Bill ${billNum} for ${newBill.supplierName} (₹${grandTotal}) - Status: ${newBill.status}`, tid);
     this.saveToDisk();
 
     return newBill;
   }
 
-  verifyOwnerOtpAndPost(billId: string, otp: string, userName: string = 'Owner'): { success: boolean; message: string } {
+  verifyOwnerOtpAndPost(billId: string, otp: string, userName: string = 'Owner', tenantId?: string): { success: boolean; message: string } {
+    const tid = tenantId || 't_main';
     if (otp !== this.ownerOtpCode) {
-      this.logAudit('SECURITY', userName, 'OTP_VERIFICATION_FAILED', 'Purchase Approval', `Failed OTP verification attempt for Bill ID ${billId}`);
+      this.logAudit('SECURITY', userName, 'OTP_VERIFICATION_FAILED', 'Purchase Approval', `Failed OTP verification attempt for Bill ID ${billId}`, tid);
       return { success: false, message: 'Invalid Owner OTP! Verification failed.' };
     }
 
-    const bill = this.purchaseBills.find(b => b.id === billId);
+    const bill = this.purchaseBills.find(b => b.id === billId && (b.tenantId || 't_main') === tid);
     if (!bill) {
       return { success: false, message: 'Purchase bill not found.' };
     }
@@ -557,28 +683,29 @@ class ERPDataStore {
     bill.approvedBy = userName + ' (Owner OTP Verified)';
     bill.postedAt = new Date().toISOString();
 
-    this.postPurchaseBillStockAndAccounts(bill);
+    this.postPurchaseBillStockAndAccounts(bill, tid);
 
-    this.logAudit('OWNER', userName, 'APPROVE_PURCHASE_OTP', 'Purchase Approval', `Verified Owner OTP and posted Purchase Bill ${bill.billNumber} (₹${bill.grandTotal})`);
+    this.logAudit('OWNER', userName, 'APPROVE_PURCHASE_OTP', 'Purchase Approval', `Verified Owner OTP and posted Purchase Bill ${bill.billNumber} (₹${bill.grandTotal})`, tid);
     this.saveToDisk();
     return { success: true, message: `Owner OTP verified successfully! Purchase ${bill.billNumber} posted to Stock, Ledger & GST.` };
   }
 
-  private postPurchaseBillStockAndAccounts(bill: PurchaseBill) {
+  private postPurchaseBillStockAndAccounts(bill: PurchaseBill, tenantId: string) {
     bill.items.forEach(item => {
-      const prod = this.products.find(p => p.id === item.productId);
+      const prod = this.products.find(p => p.id === item.productId && (p.tenantId || 't_main') === tenantId);
       if (prod) {
         prod.currentStock += item.quantity;
       }
     });
 
-    const supplier = this.suppliers.find(s => s.id === bill.supplierId);
+    const supplier = this.suppliers.find(s => s.id === bill.supplierId && (s.tenantId || 't_main') === tenantId);
     if (supplier) {
       supplier.currentBalance += bill.grandTotal;
     }
 
     this.ledgerVouchers.unshift({
       id: 'v_' + Date.now(),
+      tenantId,
       voucherNo: 'VCH-PUR-' + bill.billNumber,
       date: bill.billDate,
       voucherType: 'PURCHASE',

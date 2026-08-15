@@ -57,6 +57,7 @@ export interface User {
 
 export interface Branch {
   id: string;
+  tenantId?: string;
   code: string;
   name: string;
   address: string;
@@ -66,6 +67,7 @@ export interface Branch {
 }
 
 export interface Company {
+  tenantId?: string;
   name: string;
   logo: string;
   tagline: string;
@@ -98,6 +100,7 @@ export interface ProductRates {
 
 export interface Product {
   id: string;
+  tenantId?: string;
   code: string;
   sku: string;
   barcode: string;
@@ -120,6 +123,7 @@ export interface Product {
 
 export interface Customer {
   id: string;
+  tenantId?: string;
   code: string;
   name: string;
   companyName?: string;
@@ -139,6 +143,7 @@ export interface Customer {
 
 export interface Supplier {
   id: string;
+  tenantId?: string;
   code: string;
   name: string;
   companyName: string;
@@ -181,6 +186,7 @@ export type SalesStatus = 'DRAFT' | 'PENDING' | 'ACCEPTED' | 'DISPATCHED' | 'PAI
 
 export interface SalesInvoice {
   id: string;
+  tenantId?: string;
   docType: SalesDocType;
   invoiceNumber: string;
   invoiceDate: string;
@@ -219,6 +225,7 @@ export type PurchaseStatus = 'DRAFT' | 'PENDING_OWNER_OTP' | 'APPROVED' | 'POSTE
 
 export interface PurchaseBill {
   id: string;
+  tenantId?: string;
   billNumber: string;
   supplierInvoiceNo: string;
   billDate: string;
@@ -246,6 +253,7 @@ export interface PurchaseBill {
 
 export interface Godown {
   id: string;
+  tenantId?: string;
   code: string;
   name: string;
   location: string;
@@ -254,6 +262,7 @@ export interface Godown {
 
 export interface StockTransfer {
   id: string;
+  tenantId?: string;
   transferNo: string;
   date: string;
   fromGodownId: string;
@@ -270,6 +279,7 @@ export interface StockTransfer {
 
 export interface BatchItem {
   id: string;
+  tenantId?: string;
   productId: string;
   productName: string;
   batchNumber: string;
@@ -282,6 +292,7 @@ export interface BatchItem {
 
 export interface LedgerAccount {
   id: string;
+  tenantId?: string;
   code: string;
   name: string;
   group: 'ASSET' | 'LIABILITY' | 'EQUITY' | 'INCOME' | 'EXPENSE';
@@ -291,6 +302,7 @@ export interface LedgerAccount {
 
 export interface LedgerVoucher {
   id: string;
+  tenantId?: string;
   voucherNo: string;
   date: string;
   voucherType: 'SALES' | 'PURCHASE' | 'RECEIPT' | 'PAYMENT' | 'CONTRA' | 'JOURNAL';
@@ -303,6 +315,7 @@ export interface LedgerVoucher {
 
 export interface AuditLog {
   id: string;
+  tenantId?: string;
   timestamp: string;
   userRole: string;
   userName: string;

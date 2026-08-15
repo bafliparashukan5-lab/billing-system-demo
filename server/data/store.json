@@ -1,0 +1,231 @@
+{
+  "company": {
+    "name": "Apex ERP Technologies Pvt Ltd",
+    "logo": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=60",
+    "tagline": "Complete Enterprise Billing & Inventory System",
+    "address": "Corporate Headquarters",
+    "cityState": "Mumbai, Maharashtra",
+    "pincode": "400001",
+    "phone": "+91 98765 43210",
+    "email": "contact@apexerp.com",
+    "website": "www.apexerp.com",
+    "gstin": "27AAACA1234A1Z5",
+    "pan": "AAACA1234A",
+    "cin": "U72200MH2021PTC350000",
+    "bankName": "HDFC Bank Ltd",
+    "accountNo": "50200048291045",
+    "ifscCode": "HDFC0000240",
+    "branchName": "Main Branch, Mumbai",
+    "upiId": "apexerp@hdfcbank",
+    "currencySymbol": "₹",
+    "termsAndConditions": [
+      "1. Goods once sold will not be taken back without valid return approval.",
+      "2. Interest @ 18% p.a. will be charged on overdue payments exceeding credit terms.",
+      "3. All disputes subject to Mumbai Jurisdiction only."
+    ]
+  },
+  "branches": [
+    {
+      "id": "b1",
+      "code": "BR-MAIN",
+      "name": "Main Branch - Head Office",
+      "address": "Headquarters",
+      "phone": "+91 98765 43210",
+      "gstin": "27AAACA1234A1Z5",
+      "isMain": true
+    }
+  ],
+  "tenants": [
+    {
+      "id": "t_1786768410862",
+      "code": "TENANT-002",
+      "companyName": "Karam ",
+      "email": "karim@gmail.com",
+      "password": "client123",
+      "phone": "+91 98000 00000",
+      "gstin": "27AAACA0000A1Z5",
+      "active": true,
+      "createdAt": "2026-08-15T04:33:30.862Z",
+      "features": {
+        "posBilling": true,
+        "salesWorkflow": true,
+        "purchaseOtp": true,
+        "productRates": true,
+        "inventoryGodown": true,
+        "accountsLedger": true,
+        "gstStatutory": true,
+        "outstandingAgeing": true,
+        "analyticsAi": true
+      }
+    },
+    {
+      "id": "t_main",
+      "code": "TENANT-001",
+      "companyName": "Main Enterprise Account",
+      "email": "client@apexerp.com",
+      "password": "client123",
+      "phone": "+91 98765 43210",
+      "gstin": "27AAACA1234A1Z5",
+      "active": true,
+      "createdAt": "2026-08-15T04:30:05.196Z",
+      "features": {
+        "posBilling": true,
+        "salesWorkflow": true,
+        "purchaseOtp": true,
+        "productRates": true,
+        "inventoryGodown": true,
+        "accountsLedger": true,
+        "gstStatutory": true,
+        "outstandingAgeing": true,
+        "analyticsAi": true
+      }
+    }
+  ],
+  "products": [],
+  "customers": [],
+  "suppliers": [],
+  "salesInvoices": [],
+  "purchaseBills": [],
+  "godowns": [
+    {
+      "id": "g1",
+      "code": "GDN-MAIN",
+      "name": "Main Warehouse Godown",
+      "location": "Central Logistics Hub",
+      "capacity": "10,000 Sq.Ft"
+    }
+  ],
+  "stockTransfers": [],
+  "batches": [],
+  "ledgerAccounts": [
+    {
+      "id": "la1",
+      "code": "1001",
+      "name": "Cash Account (Counter)",
+      "group": "ASSET",
+      "balance": 0,
+      "debitCredit": "Dr"
+    },
+    {
+      "id": "la2",
+      "code": "1002",
+      "name": "Operating Bank Account",
+      "group": "ASSET",
+      "balance": 0,
+      "debitCredit": "Dr"
+    },
+    {
+      "id": "la3",
+      "code": "1100",
+      "name": "Trade Receivables (Sundry Debtors)",
+      "group": "ASSET",
+      "balance": 0,
+      "debitCredit": "Dr"
+    },
+    {
+      "id": "la4",
+      "code": "1200",
+      "name": "Closing Merchandise Inventory",
+      "group": "ASSET",
+      "balance": 0,
+      "debitCredit": "Dr"
+    },
+    {
+      "id": "la5",
+      "code": "2001",
+      "name": "Trade Payables (Sundry Creditors)",
+      "group": "LIABILITY",
+      "balance": 0,
+      "debitCredit": "Cr"
+    },
+    {
+      "id": "la6",
+      "code": "2101",
+      "name": "CGST Output Payable",
+      "group": "LIABILITY",
+      "balance": 0,
+      "debitCredit": "Cr"
+    },
+    {
+      "id": "la7",
+      "code": "2102",
+      "name": "SGST Output Payable",
+      "group": "LIABILITY",
+      "balance": 0,
+      "debitCredit": "Cr"
+    },
+    {
+      "id": "la8",
+      "code": "2103",
+      "name": "IGST Output Payable",
+      "group": "LIABILITY",
+      "balance": 0,
+      "debitCredit": "Cr"
+    },
+    {
+      "id": "la9",
+      "code": "2104",
+      "name": "CGST Input Tax Credit (ITC)",
+      "group": "ASSET",
+      "balance": 0,
+      "debitCredit": "Dr"
+    },
+    {
+      "id": "la10",
+      "code": "2105",
+      "name": "SGST Input Tax Credit (ITC)",
+      "group": "ASSET",
+      "balance": 0,
+      "debitCredit": "Dr"
+    },
+    {
+      "id": "la11",
+      "code": "3001",
+      "name": "Sales Account (Domestic)",
+      "group": "INCOME",
+      "balance": 0,
+      "debitCredit": "Cr"
+    },
+    {
+      "id": "la12",
+      "code": "4001",
+      "name": "Purchase Account",
+      "group": "EXPENSE",
+      "balance": 0,
+      "debitCredit": "Dr"
+    }
+  ],
+  "ledgerVouchers": [],
+  "auditLogs": [
+    {
+      "id": "al_1786768425054",
+      "timestamp": "2026-08-15T04:33:45.054Z",
+      "userRole": "OWNER",
+      "userName": "Karam ",
+      "action": "LOGIN_SUCCESS",
+      "module": "Auth",
+      "details": "Client logged into ERP system (karim@gmail.com)",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "al_1786768410862",
+      "timestamp": "2026-08-15T04:33:30.862Z",
+      "userRole": "SUPER_ADMIN",
+      "userName": "Super Admin",
+      "action": "CREATE_TENANT",
+      "module": "SaaS Admin",
+      "details": "Created Client Account Karam  (karim@gmail.com)",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "al_1786768332982",
+      "timestamp": "2026-08-15T04:32:12.982Z",
+      "userRole": "SUPER_ADMIN",
+      "userName": "Super Admin",
+      "action": "LOGIN_SUCCESS",
+      "module": "Auth",
+      "details": "Super Admin logged into SaaS management portal",
+      "ipAddress": "127.0.0.1"
+    }
+  ]
+}
