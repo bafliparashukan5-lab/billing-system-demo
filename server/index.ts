@@ -56,6 +56,13 @@ app.post('/api/superadmin/tenants/:id/features', (req, res) => {
   res.json(tenant);
 });
 
+app.delete('/api/superadmin/tenants/:id', (req, res) => {
+  const { id } = req.params;
+  const deleted = dbStore.deleteTenant(id);
+  if (!deleted) return res.status(404).json({ message: 'Tenant not found' });
+  res.json({ success: true, message: 'Tenant deleted successfully' });
+});
+
 // --- 1. Dynamic Dashboard Metrics & Graph API (Tenant Isolated) ---
 app.get('/api/dashboard', (req, res) => {
   const tid = getTenantId(req);
@@ -169,6 +176,13 @@ app.post('/api/products', (req, res) => {
   res.status(201).json(newProduct);
 });
 
+app.delete('/api/products/:id', (req, res) => {
+  const tid = getTenantId(req);
+  const deleted = dbStore.deleteProduct(req.params.id, tid);
+  if (!deleted) return res.status(404).json({ message: 'Product not found' });
+  res.json({ success: true, message: 'Product deleted successfully' });
+});
+
 app.get('/api/customers', (req, res) => {
   const tid = getTenantId(req);
   res.json(dbStore.getCustomersForTenant(tid));
@@ -194,6 +208,13 @@ app.post('/api/customers', (req, res) => {
   dbStore.saveToDisk();
 
   res.status(201).json(newCust);
+});
+
+app.delete('/api/customers/:id', (req, res) => {
+  const tid = getTenantId(req);
+  const deleted = dbStore.deleteCustomer(req.params.id, tid);
+  if (!deleted) return res.status(404).json({ message: 'Customer not found' });
+  res.json({ success: true, message: 'Customer deleted successfully' });
 });
 
 app.get('/api/suppliers', (req, res) => {
@@ -223,6 +244,13 @@ app.post('/api/suppliers', (req, res) => {
   res.status(201).json(newSupp);
 });
 
+app.delete('/api/suppliers/:id', (req, res) => {
+  const tid = getTenantId(req);
+  const deleted = dbStore.deleteSupplier(req.params.id, tid);
+  if (!deleted) return res.status(404).json({ message: 'Supplier not found' });
+  res.json({ success: true, message: 'Supplier deleted successfully' });
+});
+
 // --- 4. Sales Workflow & POS API (Tenant Isolated) ---
 app.get('/api/sales', (req, res) => {
   const tid = getTenantId(req);
@@ -235,6 +263,13 @@ app.post('/api/sales', (req, res) => {
   const userName = (req.headers['x-user-name'] as string) || 'Salesperson';
   const invoice = dbStore.createSalesInvoice(req.body, userName, tid);
   res.status(201).json(invoice);
+});
+
+app.delete('/api/sales/:id', (req, res) => {
+  const tid = getTenantId(req);
+  const deleted = dbStore.deleteSalesInvoice(req.params.id, tid);
+  if (!deleted) return res.status(404).json({ message: 'Sales invoice not found' });
+  res.json({ success: true, message: 'Invoice deleted and inventory restored' });
 });
 
 app.post('/api/sales/convert/:id', (req, res) => {
@@ -272,6 +307,13 @@ app.post('/api/purchases', (req, res) => {
   const userName = (req.headers['x-user-name'] as string) || 'Purchase Agent';
   const bill = dbStore.createPurchaseBill(req.body, userName, tid);
   res.status(201).json(bill);
+});
+
+app.delete('/api/purchases/:id', (req, res) => {
+  const tid = getTenantId(req);
+  const deleted = dbStore.deletePurchaseBill(req.params.id, tid);
+  if (!deleted) return res.status(404).json({ message: 'Purchase bill not found' });
+  res.json({ success: true, message: 'Purchase bill deleted and inventory adjusted' });
 });
 
 app.post('/api/purchases/verify-otp', (req, res) => {

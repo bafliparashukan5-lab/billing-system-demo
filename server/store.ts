@@ -279,6 +279,118 @@ class ERPDataStore {
     return this.auditLogs.filter(a => (a.tenantId || 't_main') === tid);
   }
 
+  // --- Deletion Methods with Automatic Inventory Adjustment & Disk Persistence ---
+
+  deleteProduct(id: string, tenantId?: string): boolean {
+    const tid = tenantId || 't_main';
+    const idx = this.products.findIndex(p => p.id === id && (p.tenantId || 't_main') === tid);
+    if (idx !== -1) {
+      const deleted = this.products.splice(idx, 1)[0];
+      this.logAudit('ADMIN', 'Admin User', 'DELETE_PRODUCT', 'Master Data', `Deleted product ${deleted.name} (${deleted.code})`, tid);
+      this.saveToDisk();
+      return true;
+    }
+    return false;
+  }
+
+  deleteCustomer(id: string, tenantId?: string): boolean {
+    const tid = tenantId || 't_main';
+    const idx = this.customers.findIndex(c => c.id === id && (c.tenantId || 't_main') === tid);
+    if (idx !== -1) {
+      const deleted = this.customers.splice(idx, 1)[0];
+      this.logAudit('ADMIN', 'Admin User', 'DELETE_CUSTOMER', 'Master Data', `Deleted customer ${deleted.name} (${deleted.code})`, tid);
+      this.saveToDisk();
+      return true;
+    }
+    return false;
+  }
+
+  deleteSupplier(id: string, tenantId?: string): boolean {
+    const tid = tenantId || 't_main';
+    const idx = this.suppliers.findIndex(s => s.id === id && (s.tenantId || 't_main') === tid);
+    if (idx !== -1) {
+      const deleted = this.suppliers.splice(idx, 1)[0];
+      this.logAudit('ADMIN', 'Admin User', 'DELETE_SUPPLIER', 'Master Data', `Deleted supplier ${deleted.name} (${deleted.code})`, tid);
+      this.saveToDisk();
+      return true;
+    }
+    return false;
+  }
+
+  deleteSalesInvoice(id: string, tenantId?: string): boolean {
+    const tid = tenantId || 't_main';
+    const idx = this.salesInvoices.findIndex(i => i.id === id && (i.tenantId || 't_main') === tid);
+    if (idx !== -1) {
+      const deleted = this.salesInvoices.splice(idx, 1)[0];
+      
+      // Automatic Stock Restoration: Add sold quantities back to inventory
+      if (deleted.docType === 'SALES_INVOICE' || deleted.docType === 'POS_RECEIPT') {
+        deleted.items.forEach(item => {
+          const prod = this.products.find(p => p.id === item.productId && (p.tenantId || 't_main') === tid);
+          if (prod) {
+            prod.currentStock += item.quantity;
+          }
+        });
+      }
+
+      // Revert customer balance
+      if (deleted.customerId && deleted.dueAmount > 0) {
+        const cust = this.customers.find(c => c.id === deleted.customerId && (c.tenantId || 't_main') === tid);
+        if (cust) {
+          cust.currentBalance = Math.max(0, cust.currentBalance - deleted.dueAmount);
+        }
+      }
+
+      this.logAudit('SALES', 'Sales Admin', 'DELETE_SALES_INVOICE', 'Sales', `Deleted Invoice ${deleted.invoiceNumber} (Restored inventory stock)`, tid);
+      this.saveToDisk();
+      return true;
+    }
+    return false;
+  }
+
+  deletePurchaseBill(id: string, tenantId?: string): boolean {
+    const tid = tenantId || 't_main';
+    const idx = this.purchaseBills.findIndex(b => b.id === id && (b.tenantId || 't_main') === tid);
+    if (idx !== -1) {
+      const deleted = this.purchaseBills.splice(idx, 1)[0];
+
+      // Automatic Stock Adjustment: Revert stock added by this purchase bill if posted
+      if (deleted.status === 'POSTED') {
+        deleted.items.forEach(item => {
+          const prod = this.products.find(p => p.id === item.productId && (p.tenantId || 't_main') === tid);
+          if (prod) {
+            prod.currentStock = Math.max(0, prod.currentStock - item.quantity);
+          }
+        });
+      }
+
+      // Revert supplier balance
+      if (deleted.supplierId && deleted.status === 'POSTED') {
+        const supp = this.suppliers.find(s => s.id === deleted.supplierId && (s.tenantId || 't_main') === tid);
+        if (supp) {
+          supp.currentBalance = Math.max(0, supp.currentBalance - deleted.grandTotal);
+        }
+      }
+
+      this.logAudit('PURCHASE', 'Purchase Admin', 'DELETE_PURCHASE_BILL', 'Purchase', `Deleted Purchase Bill ${deleted.billNumber} (Reverted inventory stock)`, tid);
+      this.saveToDisk();
+      return true;
+    }
+    return false;
+  }
+
+  deleteTenant(tenantId: string): boolean {
+    const idx = this.tenants.findIndex(t => t.id === tenantId);
+    if (idx !== -1) {
+      const deleted = this.tenants.splice(idx, 1)[0];
+      delete this.tenantCompanies[tenantId];
+      this.logAudit('SUPER_ADMIN', 'Super Admin', 'DELETE_TENANT', 'SaaS Admin', `Deleted Tenant Account ${deleted.companyName} (${deleted.email})`, tenantId);
+      this.saveToDisk();
+      return true;
+    }
+    return false;
+  }
+
   // --- Super Admin SaaS Tenant Methods ---
 
   createTenant(data: Partial<Tenant>): Tenant {
@@ -308,7 +420,6 @@ class ERPDataStore {
 
     this.tenants.unshift(newTenant);
     
-    // Initialize isolated company profile & main godown for new tenant
     this.tenantCompanies[tid] = {
       ...DEFAULT_COMPANY_TEMPLATE,
       tenantId: tid,

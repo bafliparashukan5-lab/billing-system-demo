@@ -10,7 +10,7 @@ interface PurchaseLineDraft {
 }
 
 export const PurchasePage: React.FC = () => {
-  const { purchaseBills, suppliers, products, createPurchaseBill, setActiveOtpBill, addToast } = useERP();
+  const { purchaseBills, suppliers, products, createPurchaseBill, setActiveOtpBill, addToast, deleteRecord } = useERP();
   const [showModal, setShowModal] = useState(false);
   const [supplierId, setSupplierId] = useState('');
   
@@ -118,6 +118,12 @@ export const PurchasePage: React.FC = () => {
     setShowModal(false);
   };
 
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this purchase bill? Inventory stock will be automatically adjusted.')) {
+      await deleteRecord('purchases', id);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -133,7 +139,7 @@ export const PurchasePage: React.FC = () => {
           className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-purple-600/30 transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Create Purchase Bill</span>
+          <span>Create Purchase Bill</span>
         </button>
       </div>
 
@@ -149,14 +155,14 @@ export const PurchasePage: React.FC = () => {
                 <th className="py-3 px-4 text-right">Taxable</th>
                 <th className="py-3 px-4 text-right">Grand Total</th>
                 <th className="py-3 px-4">Approval Status</th>
-                <th className="py-3 px-4 text-center">Action / Verification</th>
+                <th className="py-3 px-4 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {purchaseBills.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-8 text-center text-slate-500">
-                    No purchase bills created yet. Click + Create Purchase Bill to record your first stock entry.
+                    No purchase bills created yet. Click Create Purchase Bill to record your first stock entry.
                   </td>
                 </tr>
               ) : (
@@ -182,10 +188,10 @@ export const PurchasePage: React.FC = () => {
                         'bg-slate-800 text-slate-400'
                       }`}>
                         {bill.status === 'POSTED' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                        <span>{bill.status.replace('_', ' ')}</span>
+                        <span>{bill.status.replace(/_/g, ' ')}</span>
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-3 px-4 text-center space-x-1">
                       {bill.status === 'PENDING_OWNER_OTP' ? (
                         <button
                           onClick={() => setActiveOtpBill(bill)}
@@ -194,8 +200,15 @@ export const PurchasePage: React.FC = () => {
                           Enter Owner OTP
                         </button>
                       ) : (
-                        <span className="text-[11px] text-slate-400 italic">Posted & Verified</span>
+                        <span className="text-[11px] text-slate-400 italic">Posted</span>
                       )}
+                      <button 
+                        onClick={() => handleDelete(bill.id)}
+                        className="p-1.5 rounded hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 cursor-pointer inline-flex items-center ml-1"
+                        title="Delete Purchase Bill"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -238,7 +251,7 @@ export const PurchasePage: React.FC = () => {
                     className="flex items-center space-x-1 text-[11px] font-bold text-purple-400 hover:text-purple-300 bg-purple-500/10 border border-purple-500/30 px-2.5 py-1 rounded-lg"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>+ Add Product Line</span>
+                    <span>Add Product Line</span>
                   </button>
                 </div>
 

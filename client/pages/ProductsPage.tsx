@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useERP } from '../context/ERPContext';
-import { Lock, Plus, Search } from 'lucide-react';
+import { Lock, Plus, Search, Trash2 } from 'lucide-react';
 
 export const ProductsPage: React.FC = () => {
-  const { products, currentRole, addToast, refreshData } = useERP();
+  const { products, currentRole, addToast, refreshData, deleteRecord, session } = useERP();
   const [query, setQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -22,7 +22,7 @@ export const ProductsPage: React.FC = () => {
     try {
       await fetch('/api/products', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-tenant-id': session?.tenantId || session?.tenant?.id || 't_main' },
         body: JSON.stringify({
           name, category, subcategory: 'General', brand: 'Generic',
           hsnSac, unit, gstRate, openingStock,
@@ -62,7 +62,7 @@ export const ProductsPage: React.FC = () => {
           className="flex items-center space-x-2 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-brand-600/30 transition"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Add Product</span>
+          <span>Add Product</span>
         </button>
       </div>
 
@@ -92,6 +92,7 @@ export const ProductsPage: React.FC = () => {
                 <th className="py-3 px-4 text-right">Wholesale Rate</th>
                 <th className="py-3 px-4 text-right">Dealer Rate</th>
                 <th className="py-3 px-4">GST %</th>
+                <th className="py-3 px-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
@@ -128,6 +129,15 @@ export const ProductsPage: React.FC = () => {
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300">
                       {p.gstRate}% GST
                     </span>
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    <button 
+                      onClick={() => { if (confirm(`Delete product "${p.name}"? This cannot be undone.`)) deleteRecord('products', p.id); }}
+                      className="p-1.5 rounded hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 cursor-pointer"
+                      title="Delete Product"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </td>
                 </tr>
               ))}

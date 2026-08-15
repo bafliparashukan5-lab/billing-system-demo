@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useERP } from '../context/ERPContext';
 import { SalesDocType, LineItem } from '../../shared/types';
-import { Plus, Eye, Trash2, ShoppingBag } from 'lucide-react';
+import { Plus, Eye, Trash2, ShoppingBag, Printer } from 'lucide-react';
 
 interface InvoiceLineDraft {
   productId: string;
@@ -13,12 +13,13 @@ interface InvoiceLineDraft {
 export const SalesPage: React.FC = () => {
   const { 
     salesInvoices, customers, products, createSalesInvoice, 
-    convertDocument, setActivePdfInvoice, addToast 
+    convertDocument, setActivePdfInvoice, addToast, deleteRecord 
   } = useERP();
 
   const [activeTab, setActiveTab] = useState<SalesDocType>('SALES_INVOICE');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [paymentMode, setPaymentMode] = useState<'CASH' | 'UPI' | 'CREDIT_CARD' | 'BANK_TRANSFER' | 'CREDIT'>('CREDIT');
   
   // Multi-item draft state
   const [lineDrafts, setLineDrafts] = useState<InvoiceLineDraft[]>([]);
@@ -39,6 +40,7 @@ export const SalesPage: React.FC = () => {
       return;
     }
     setSelectedCustomerId(customers[0].id);
+    setPaymentMode('CREDIT');
     const initialProduct = products[0];
     setLineDrafts([{
       productId: initialProduct.id,
@@ -139,7 +141,7 @@ export const SalesPage: React.FC = () => {
       };
     });
 
-    await createSalesInvoice({
+    const inv = await createSalesInvoice({
       docType: activeTab,
       customerId: cust.id,
       customerName: cust.name,
@@ -147,10 +149,22 @@ export const SalesPage: React.FC = () => {
       customerAddress: cust.billingAddress,
       placeOfSupply: cust.state,
       isInterState,
+      paymentMode,
       items
     });
 
     setShowCreateModal(false);
+
+    // Auto-open print preview for pay & print flow
+    if (inv && (activeTab === 'SALES_INVOICE' || activeTab === 'POS_RECEIPT')) {
+      setActivePdfInvoice(inv);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this document? Inventory stock will be automatically restored.')) {
+      await deleteRecord('sales', id);
+    }
   };
 
   return (
@@ -165,7 +179,7 @@ export const SalesPage: React.FC = () => {
           className="flex items-center space-x-2 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-brand-600/30 transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>Create New {activeTab.replace('_', ' ')}</span>
+          <span>Create New {activeTab.replace(/_/g, ' ')}</span>
         </button>
       </div>
 
@@ -204,7 +218,7 @@ export const SalesPage: React.FC = () => {
               {filteredInvoices.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-8 text-center text-slate-500">
-                    No {activeTab.replace('_', ' ')} documents created yet. Click + Create to add one.
+                    No {activeTab.replace(/_/g, ' ')} documents created yet. Click Create to add one.
                   </td>
                 </tr>
               ) : (
@@ -232,13 +246,13 @@ export const SalesPage: React.FC = () => {
                         {inv.status}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-center space-x-2">
+                    <td className="py-3 px-4 text-center space-x-1">
                       <button 
                         onClick={() => setActivePdfInvoice(inv)}
-                        className="p-1.5 rounded hover:bg-slate-700 text-slate-300 hover:text-white cursor-pointer"
-                        title="View Printable Invoice"
+                        className="p-1.5 rounded hover:bg-slate-700 text-slate-300 hover:text-white cursor-pointer inline-flex items-center"
+                        title="View & Print Invoice"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Printer className="w-4 h-4" />
                       </button>
 
                       {inv.docType === 'QUOTATION' && (
@@ -246,9 +260,17 @@ export const SalesPage: React.FC = () => {
                           onClick={() => convertDocument(inv.id, 'SALES_INVOICE')}
                           className="px-2 py-1 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded text-[10px] font-bold hover:bg-emerald-600 hover:text-white transition"
                         >
-                          → Convert to Invoice
+                          → Invoice
                         </button>
                       )}
+
+                      <button 
+                        onClick={() => handleDelete(inv.id)}
+                        className="p-1.5 rounded hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 cursor-pointer inline-flex items-center"
+                        title="Delete Document"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -264,21 +286,37 @@ export const SalesPage: React.FC = () => {
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full p-6 space-y-5 shadow-2xl my-auto">
             <h2 className="text-lg font-bold text-slate-100 flex items-center space-x-2">
               <ShoppingBag className="w-5 h-5 text-brand-400" />
-              <span>Create New {activeTab.replace('_', ' ')}</span>
+              <span>Create New {activeTab.replace(/_/g, ' ')}</span>
             </h2>
 
             <div className="space-y-4 text-xs">
-              <div>
-                <label className="block text-slate-400 mb-1 font-semibold">Select Customer:</label>
-                <select 
-                  value={selectedCustomerId}
-                  onChange={(e) => setSelectedCustomerId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-xl"
-                >
-                  {customers.map(c => (
-                    <option key={c.id} value={c.id}>{c.name} ({c.state} - GSTIN: {c.gstin})</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">Select Customer:</label>
+                  <select 
+                    value={selectedCustomerId}
+                    onChange={(e) => setSelectedCustomerId(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-xl"
+                  >
+                    {customers.map(c => (
+                      <option key={c.id} value={c.id}>{c.name} ({c.state})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">Payment Mode:</label>
+                  <select 
+                    value={paymentMode}
+                    onChange={(e) => setPaymentMode(e.target.value as any)}
+                    className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-xl"
+                  >
+                    <option value="CASH">Cash</option>
+                    <option value="UPI">UPI</option>
+                    <option value="CREDIT_CARD">Credit Card</option>
+                    <option value="BANK_TRANSFER">Bank Transfer</option>
+                    <option value="CREDIT">Credit (Pay Later)</option>
+                  </select>
+                </div>
               </div>
 
               {/* Multi-Item Line Table */}
@@ -291,7 +329,7 @@ export const SalesPage: React.FC = () => {
                     className="flex items-center space-x-1 text-[11px] font-bold text-brand-400 hover:text-brand-300 bg-brand-500/10 border border-brand-500/30 px-2.5 py-1 rounded-lg"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>+ Add Product Line</span>
+                    <span>Add Product Line</span>
                   </button>
                 </div>
 
@@ -301,7 +339,7 @@ export const SalesPage: React.FC = () => {
                     const lineTotal = (draft.quantity * draft.rate) * (1 - draft.discountPercent / 100) * (1 + (prod?.gstRate || 18) / 100);
                     return (
                       <div key={idx} className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 grid grid-cols-12 gap-2 items-center">
-                        <div className="col-span-5">
+                        <div className="col-span-4">
                           <label className="block text-[10px] text-slate-500 mb-0.5">Product Item</label>
                           <select 
                             value={draft.productId}
@@ -335,6 +373,18 @@ export const SalesPage: React.FC = () => {
                           />
                         </div>
 
+                        <div className="col-span-1">
+                          <label className="block text-[10px] text-slate-500 mb-0.5">Disc %</label>
+                          <input 
+                            type="number"
+                            min={0}
+                            max={100}
+                            value={draft.discountPercent}
+                            onChange={(e) => updateLineDraft(idx, 'discountPercent', Number(e.target.value))}
+                            className="w-full bg-slate-900 border border-slate-700 text-slate-200 p-1.5 rounded-lg text-xs"
+                          />
+                        </div>
+
                         <div className="col-span-2">
                           <label className="block text-[10px] text-slate-500 mb-0.5">Total (Incl Tax)</label>
                           <span className="block p-1.5 text-xs font-extrabold text-brand-300 font-mono">₹{Math.round(lineTotal).toLocaleString('en-IN')}</span>
@@ -358,7 +408,10 @@ export const SalesPage: React.FC = () => {
 
             <div className="flex space-x-3 pt-3 border-t border-slate-800">
               <button onClick={() => setShowCreateModal(false)} className="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs font-semibold">Cancel</button>
-              <button onClick={handleCreate} className="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 rounded-xl text-xs">Save & Post Invoice</button>
+              <button onClick={handleCreate} className="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center space-x-1">
+                <Printer className="w-4 h-4" />
+                <span>Pay & Save Invoice</span>
+              </button>
             </div>
           </div>
         </div>

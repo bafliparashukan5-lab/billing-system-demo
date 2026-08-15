@@ -56,6 +56,7 @@ interface ERPContextType {
   createPurchaseBill: (bill: Partial<PurchaseBill>) => Promise<PurchaseBill | null>;
   verifyOwnerOtp: (billId: string, otp: string) => Promise<boolean>;
   convertDocument: (id: string, targetDocType: string) => Promise<void>;
+  deleteRecord: (type: 'products' | 'customers' | 'suppliers' | 'sales' | 'purchases', id: string) => Promise<boolean>;
 }
 
 const ERPContext = createContext<ERPContextType | undefined>(undefined);
@@ -259,6 +260,27 @@ export const ERPProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const deleteRecord = async (type: 'products' | 'customers' | 'suppliers' | 'sales' | 'purchases', id: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/${type}/${id}`, {
+        method: 'DELETE',
+        headers: { 'x-tenant-id': activeTenantId }
+      });
+      const data = await res.json();
+      if (data.success) {
+        addToast('success', data.message);
+        await refreshData();
+        return true;
+      } else {
+        addToast('error', data.message || 'Delete failed');
+        return false;
+      }
+    } catch (err) {
+      addToast('error', 'Failed to delete record');
+      return false;
+    }
+  };
+
   return (
     <ERPContext.Provider value={{
       session, login, logout, tenantFeatures,
@@ -268,7 +290,7 @@ export const ERPProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       salesInvoices, purchaseBills, godowns, ledgerVouchers, auditLogs,
       metrics, activeOtpBill, setActiveOtpBill, activePdfInvoice, setActivePdfInvoice,
       isSearchOpen, setIsSearchOpen, toasts, addToast, refreshData,
-      createSalesInvoice, createPurchaseBill, verifyOwnerOtp, convertDocument
+      createSalesInvoice, createPurchaseBill, verifyOwnerOtp, convertDocument, deleteRecord
     }}>
       {children}
     </ERPContext.Provider>

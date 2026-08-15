@@ -3,7 +3,7 @@ import { useERP } from '../context/ERPContext';
 import { Tenant, TenantFeatureToggles } from '../../shared/types';
 import { 
   ShieldCheck, Users, Plus, ToggleLeft, ToggleRight, 
-  Settings, CheckCircle2, XCircle, Search, Mail, Lock, Building 
+  Settings, CheckCircle2, XCircle, Search, Mail, Lock, Building, Trash2 
 } from 'lucide-react';
 
 export const SuperAdminPage: React.FC = () => {
@@ -109,7 +109,7 @@ export const SuperAdminPage: React.FC = () => {
           className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-purple-600/30 transition"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Create New Client Account</span>
+          <span>Create New Client Account</span>
         </button>
       </div>
 
@@ -171,6 +171,24 @@ export const SuperAdminPage: React.FC = () => {
                         }`}
                       >
                         {tenant.active ? 'Deactivate Client' : 'Activate Client'}
+                      </button>
+
+                      <button
+                        onClick={async () => {
+                          if (confirm(`Permanently delete tenant "${tenant.companyName}"? All associated data will remain but the login will be removed.`)) {
+                            try {
+                              await fetch(`/api/superadmin/tenants/${tenant.id}`, { method: 'DELETE' });
+                              addToast('success', `Tenant ${tenant.companyName} deleted`);
+                              fetchTenants();
+                            } catch (err) {
+                              addToast('error', 'Failed to delete tenant');
+                            }
+                          }
+                        }}
+                        className="p-1.5 rounded hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 cursor-pointer"
+                        title="Delete Tenant"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </td>
                   </tr>

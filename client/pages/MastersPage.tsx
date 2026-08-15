@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useERP } from '../context/ERPContext';
-import { Users, Truck, Plus } from 'lucide-react';
+import { Users, Truck, Plus, Trash2 } from 'lucide-react';
 
 export const MastersPage: React.FC = () => {
-  const { customers, suppliers, addToast, refreshData } = useERP();
+  const { customers, suppliers, addToast, refreshData, deleteRecord, session } = useERP();
   const [activeTab, setActiveTab] = useState<'CUSTOMERS' | 'SUPPLIERS'>('CUSTOMERS');
   const [showModal, setShowModal] = useState(false);
 
@@ -19,7 +19,7 @@ export const MastersPage: React.FC = () => {
     try {
       await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-tenant-id': session?.tenantId || session?.tenant?.id || 't_main' },
         body: JSON.stringify({
           name, companyName: name, gstin, email, phone, billingAddress: 'MIDC Estate', shippingAddress: 'MIDC Estate', state, creditLimit: 500000, creditDays: 30, openingBalance: 0
         })
@@ -44,7 +44,7 @@ export const MastersPage: React.FC = () => {
           className="flex items-center space-x-2 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-brand-600/30 transition"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Add {activeTab === 'CUSTOMERS' ? 'Customer' : 'Supplier'}</span>
+          <span>Add {activeTab === 'CUSTOMERS' ? 'Customer' : 'Supplier'}</span>
         </button>
       </div>
 
@@ -77,6 +77,7 @@ export const MastersPage: React.FC = () => {
                 <th className="py-3 px-4">Phone / Email</th>
                 <th className="py-3 px-4 text-right">Credit Limit</th>
                 <th className="py-3 px-4 text-right">Current Balance</th>
+                <th className="py-3 px-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
@@ -90,6 +91,15 @@ export const MastersPage: React.FC = () => {
                     <td className="py-3 px-4 text-slate-400">{c.phone}</td>
                     <td className="py-3 px-4 text-right font-medium text-slate-300">₹{c.creditLimit.toLocaleString('en-IN')}</td>
                     <td className="py-3 px-4 text-right font-extrabold text-emerald-400">₹{c.currentBalance.toLocaleString('en-IN')}</td>
+                    <td className="py-3 px-4 text-center">
+                      <button 
+                        onClick={() => { if (confirm(`Delete customer "${c.name}"?`)) deleteRecord('customers', c.id); }}
+                        className="p-1.5 rounded hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 cursor-pointer"
+                        title="Delete Customer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
                   </tr>
                 ))
               ) : (
@@ -102,6 +112,15 @@ export const MastersPage: React.FC = () => {
                     <td className="py-3 px-4 text-slate-400">{s.phone}</td>
                     <td className="py-3 px-4 text-right font-medium text-slate-300">{s.paymentTerms}</td>
                     <td className="py-3 px-4 text-right font-extrabold text-rose-400">₹{s.currentBalance.toLocaleString('en-IN')}</td>
+                    <td className="py-3 px-4 text-center">
+                      <button 
+                        onClick={() => { if (confirm(`Delete supplier "${s.name}"?`)) deleteRecord('suppliers', s.id); }}
+                        className="p-1.5 rounded hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 cursor-pointer"
+                        title="Delete Supplier"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}

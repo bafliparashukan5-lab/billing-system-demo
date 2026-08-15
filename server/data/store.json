@@ -1,6 +1,6 @@
 {
   "company": {
-    "name": "Apex ERP Technologies Pvt Ltd",
+    "name": "ERP Technologies Pvt Ltd",
     "logo": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=60",
     "tagline": "Complete Enterprise Billing & Inventory System",
     "address": "Corporate Headquarters",
@@ -81,10 +81,201 @@
       }
     }
   ],
-  "products": [],
-  "customers": [],
-  "suppliers": [],
-  "salesInvoices": [],
+  "products": [
+    {
+      "name": "Test",
+      "category": "Electronics",
+      "subcategory": "General",
+      "brand": "Generic",
+      "hsnSac": "84713010",
+      "unit": "Pcs",
+      "gstRate": 18,
+      "openingStock": 10,
+      "rates": {
+        "purchaseCostRate": 1000,
+        "mrp": 1500,
+        "retailRate": 1350,
+        "wholesaleRate": 1215,
+        "dealerRate": 1148,
+        "minSellingRate": 1050
+      },
+      "rackLocation": "Rack A-01",
+      "hasBatchTracking": false,
+      "hasSerialTracking": false,
+      "id": "p_1786768828869",
+      "code": "PRD-4",
+      "currentStock": 10,
+      "minReorderLevel": 5,
+      "maxStockLevel": 100
+    },
+    {
+      "name": "Logitecg",
+      "category": "Electronics",
+      "subcategory": "General",
+      "brand": "Generic",
+      "hsnSac": "84713010",
+      "unit": "Pcs",
+      "gstRate": 18,
+      "openingStock": 10,
+      "rates": {
+        "purchaseCostRate": 1000,
+        "mrp": 1500,
+        "retailRate": 1350,
+        "wholesaleRate": 1215,
+        "dealerRate": 1148,
+        "minSellingRate": 1050
+      },
+      "rackLocation": "Rack A-01",
+      "hasBatchTracking": false,
+      "hasSerialTracking": false,
+      "id": "p_1786768822908",
+      "code": "PRD-3",
+      "currentStock": 10,
+      "minReorderLevel": 5,
+      "maxStockLevel": 100
+    },
+    {
+      "name": "Mouse",
+      "category": "Electronics",
+      "subcategory": "General",
+      "brand": "Generic",
+      "hsnSac": "84713010",
+      "unit": "Pcs",
+      "gstRate": 18,
+      "openingStock": 10,
+      "rates": {
+        "purchaseCostRate": 1000,
+        "mrp": 1500,
+        "retailRate": 1350,
+        "wholesaleRate": 1215,
+        "dealerRate": 1148,
+        "minSellingRate": 1050
+      },
+      "rackLocation": "Rack A-01",
+      "hasBatchTracking": false,
+      "hasSerialTracking": false,
+      "id": "p_1786768499256",
+      "code": "PRD-2",
+      "currentStock": 9,
+      "minReorderLevel": 5,
+      "maxStockLevel": 100
+    },
+    {
+      "name": "Wire",
+      "category": "Electronics",
+      "subcategory": "General",
+      "brand": "Generic",
+      "hsnSac": "84713010",
+      "unit": "Pcs",
+      "gstRate": 18,
+      "openingStock": 10,
+      "rates": {
+        "purchaseCostRate": 1000,
+        "mrp": 1500,
+        "retailRate": 1350,
+        "wholesaleRate": 1215,
+        "dealerRate": 1148,
+        "minSellingRate": 1050
+      },
+      "rackLocation": "Rack A-01",
+      "hasBatchTracking": false,
+      "hasSerialTracking": false,
+      "id": "p_1786768482911",
+      "code": "PRD-1",
+      "currentStock": 10,
+      "minReorderLevel": 5,
+      "maxStockLevel": 100
+    }
+  ],
+  "customers": [
+    {
+      "name": "Acme",
+      "companyName": "Acme",
+      "gstin": "27AAACR1234A1Z5",
+      "email": "",
+      "phone": "",
+      "billingAddress": "MIDC Estate",
+      "shippingAddress": "MIDC Estate",
+      "state": "Maharashtra",
+      "creditLimit": 500000,
+      "creditDays": 30,
+      "openingBalance": 0,
+      "id": "c_1786768778899",
+      "code": "CUST-001",
+      "currentBalance": 1593,
+      "active": true
+    }
+  ],
+  "suppliers": [
+    {
+      "name": "Acme",
+      "companyName": "Acme",
+      "gstin": "27AAACR1234A1Z5",
+      "email": "",
+      "phone": "",
+      "billingAddress": "MIDC Estate",
+      "shippingAddress": "MIDC Estate",
+      "state": "Maharashtra",
+      "creditLimit": 500000,
+      "creditDays": 30,
+      "openingBalance": 0,
+      "id": "s_1786768784194",
+      "code": "SUP-001",
+      "currentBalance": 0,
+      "active": true
+    }
+  ],
+  "salesInvoices": [
+    {
+      "id": "inv_1786768791194",
+      "docType": "SALES_INVOICE",
+      "invoiceNumber": "INV-2026-001",
+      "invoiceDate": "2026-08-15",
+      "dueDate": "2026-09-14",
+      "branchId": "b1",
+      "customerId": "c_1786768778899",
+      "customerName": "Acme",
+      "customerGstin": "27AAACR1234A1Z5",
+      "customerAddress": "MIDC Estate",
+      "placeOfSupply": "Maharashtra",
+      "isInterState": false,
+      "salesperson": "Karam",
+      "items": [
+        {
+          "id": "li_1786768791194_0",
+          "productId": "p_1786768499256",
+          "productCode": "PRD-2",
+          "productName": "Mouse",
+          "hsnSac": "84713010",
+          "unit": "Pcs",
+          "quantity": 1,
+          "rate": 1350,
+          "discountPercent": 0,
+          "discountAmount": 0,
+          "taxableAmount": 1350,
+          "gstRate": 18,
+          "cgstAmount": 121.5,
+          "sgstAmount": 121.5,
+          "igstAmount": 0,
+          "totalAmount": 1593
+        }
+      ],
+      "subTotal": 1350,
+      "totalDiscount": 0,
+      "totalTaxable": 1350,
+      "totalCGST": 121.5,
+      "totalSGST": 121.5,
+      "totalIGST": 0,
+      "roundOff": 0,
+      "grandTotal": 1593,
+      "paidAmount": 0,
+      "dueAmount": 1593,
+      "paymentMode": "CREDIT",
+      "status": "PENDING",
+      "qrCodeUrl": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=INVOICE:INV-2026-001_AMT:1593",
+      "createdAt": "2026-08-15T04:39:51.194Z"
+    }
+  ],
   "purchaseBills": [],
   "godowns": [
     {
@@ -195,8 +386,100 @@
       "debitCredit": "Dr"
     }
   ],
-  "ledgerVouchers": [],
+  "ledgerVouchers": [
+    {
+      "id": "v_1786768791194",
+      "voucherNo": "VCH-SLS-INV-2026-001",
+      "date": "2026-08-15",
+      "voucherType": "SALES",
+      "debitAccount": "Acme",
+      "creditAccount": "Sales Account",
+      "amount": 1350,
+      "narration": "Sales Invoice INV-2026-001 generated",
+      "referenceNo": "INV-2026-001"
+    }
+  ],
   "auditLogs": [
+    {
+      "id": "al_1786768828869",
+      "timestamp": "2026-08-15T04:40:28.869Z",
+      "userRole": "ADMIN",
+      "userName": "Admin User",
+      "action": "ADD_PRODUCT",
+      "module": "Master Data",
+      "details": "Added Product Test (PRD-4)",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "al_1786768822908",
+      "timestamp": "2026-08-15T04:40:22.908Z",
+      "userRole": "ADMIN",
+      "userName": "Admin User",
+      "action": "ADD_PRODUCT",
+      "module": "Master Data",
+      "details": "Added Product Logitecg (PRD-3)",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "al_1786768791194",
+      "timestamp": "2026-08-15T04:39:51.194Z",
+      "userRole": "SALES",
+      "userName": "Karam",
+      "action": "CREATE_INVOICE",
+      "module": "Sales",
+      "details": "Created SALES_INVOICE INV-2026-001 for Acme (₹1593)",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "al_1786768784194",
+      "timestamp": "2026-08-15T04:39:44.194Z",
+      "userRole": "ADMIN",
+      "userName": "Admin User",
+      "action": "ADD_SUPPLIER",
+      "module": "Master Data",
+      "details": "Added Supplier Acme (SUP-001)",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "al_1786768778899",
+      "timestamp": "2026-08-15T04:39:38.899Z",
+      "userRole": "ADMIN",
+      "userName": "Admin User",
+      "action": "ADD_CUSTOMER",
+      "module": "Master Data",
+      "details": "Added Customer Acme (CUST-001)",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "al_1786768739114",
+      "timestamp": "2026-08-15T04:38:59.114Z",
+      "userRole": "OWNER",
+      "userName": "Company Admin",
+      "action": "UPDATE_COMPANY_PROFILE",
+      "module": "Company",
+      "details": "Updated company profile, GSTIN & bank details",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "al_1786768499256",
+      "timestamp": "2026-08-15T04:34:59.256Z",
+      "userRole": "ADMIN",
+      "userName": "Admin User",
+      "action": "ADD_PRODUCT",
+      "module": "Master Data",
+      "details": "Added Product Mouse (PRD-2)",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "al_1786768482911",
+      "timestamp": "2026-08-15T04:34:42.911Z",
+      "userRole": "ADMIN",
+      "userName": "Admin User",
+      "action": "ADD_PRODUCT",
+      "module": "Master Data",
+      "details": "Added Product Wire (PRD-1)",
+      "ipAddress": "127.0.0.1"
+    },
     {
       "id": "al_1786768425054",
       "timestamp": "2026-08-15T04:33:45.054Z",
