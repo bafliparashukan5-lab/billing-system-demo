@@ -197,7 +197,7 @@ export const DashboardPage: React.FC<{
         <div className="lg:col-span-2 glass-panel p-6 rounded-2xl space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-sm font-bold text-slate-200">Recent Sales Transactions</h3>
-            <button onClick={onOpenInvoice} className="text-xs text-brand-400 hover:underline font-semibold">+ Create Invoice</button>
+            <button onClick={onOpenInvoice} className="text-xs text-brand-400 hover:underline font-semibold">Create Invoice</button>
           </div>
 
           <div className="overflow-x-auto">

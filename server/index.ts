@@ -163,6 +163,8 @@ app.post('/api/products', (req, res) => {
     id: 'p_' + Date.now(),
     tenantId: tid,
     code: body.code || 'PRD-' + String(tenantProducts.length + 1).padStart(3, '0'),
+    sku: body.sku || 'SKU-' + String(tenantProducts.length + 1).padStart(3, '0'),
+    barcode: body.barcode || '890' + String(Date.now()).slice(-10),
     openingStock: Number(body.openingStock || 0),
     currentStock: Number(body.openingStock || 0),
     minReorderLevel: Number(body.minReorderLevel || 5),

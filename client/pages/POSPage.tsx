@@ -9,11 +9,11 @@ import {
 export const POSPage: React.FC = () => {
   const { products, customers, createSalesInvoice, setActivePdfInvoice, addToast } = useERP();
   const [query, setQuery] = useState('');
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('c4');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [cart, setCart] = useState<{ product: Product; quantity: number; discount: number }[]>([]);
   const [paymentMode, setPaymentMode] = useState<'CASH' | 'UPI' | 'CREDIT_CARD'>('CASH');
 
-  const selectedCustomer = customers.find(c => c.id === selectedCustomerId) || customers[3];
+  const selectedCustomer = customers.find(c => c.id === selectedCustomerId) || customers[0];
 
   const addToCart = (product: Product) => {
     setCart(prev => {
@@ -47,6 +47,11 @@ export const POSPage: React.FC = () => {
   const handleCheckout = async () => {
     if (cart.length === 0) {
       addToast('warning', 'Cart is empty!');
+      return;
+    }
+
+    if (!selectedCustomer) {
+      addToast('warning', 'Please add at least one Customer in Master Data first!');
       return;
     }
 
@@ -87,7 +92,12 @@ export const POSPage: React.FC = () => {
     }
   };
 
-  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.barcode.includes(query) || p.sku.toLowerCase().includes(query.toLowerCase()));
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(query.toLowerCase()) || 
+    (p.barcode || '').includes(query) || 
+    (p.sku || '').toLowerCase().includes(query.toLowerCase()) ||
+    p.code.toLowerCase().includes(query.toLowerCase())
+  );
 
   return (
     <div className="h-[calc(100vh-4rem)] p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">

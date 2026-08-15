@@ -54,7 +54,7 @@ export const InventoryPage: React.FC = () => {
           className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/30 transition"
         >
           <ArrowRightLeft className="w-4 h-4" />
-          <span>+ Inter-Godown Stock Transfer</span>
+          <span>Inter-Godown Stock Transfer</span>
         </button>
       </div>
 

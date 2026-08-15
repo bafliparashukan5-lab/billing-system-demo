@@ -130,7 +130,7 @@
       "hasSerialTracking": false,
       "id": "p_1786768822908",
       "code": "PRD-3",
-      "currentStock": 10,
+      "currentStock": 9,
       "minReorderLevel": 5,
       "maxStockLevel": 100
     },
@@ -156,7 +156,7 @@
       "hasSerialTracking": false,
       "id": "p_1786768499256",
       "code": "PRD-2",
-      "currentStock": 9,
+      "currentStock": 8,
       "minReorderLevel": 5,
       "maxStockLevel": 100
     },
@@ -226,6 +226,73 @@
     }
   ],
   "salesInvoices": [
+    {
+      "id": "inv_1786769194284",
+      "docType": "POS_RECEIPT",
+      "invoiceNumber": "INV-2026-002",
+      "invoiceDate": "2026-08-15",
+      "dueDate": "2026-09-14",
+      "branchId": "b1",
+      "customerId": "c_1786768778899",
+      "customerName": "Acme",
+      "customerGstin": "27AAACR1234A1Z5",
+      "customerAddress": "MIDC Estate",
+      "placeOfSupply": "Maharashtra",
+      "isInterState": false,
+      "salesperson": "Karam",
+      "items": [
+        {
+          "id": "li_1786769194284_0",
+          "productId": "p_1786768822908",
+          "productCode": "PRD-3",
+          "productName": "Logitecg",
+          "hsnSac": "84713010",
+          "unit": "Pcs",
+          "quantity": 1,
+          "rate": 1350,
+          "discountPercent": 0,
+          "discountAmount": 0,
+          "taxableAmount": 1350,
+          "gstRate": 18,
+          "cgstAmount": 121.5,
+          "sgstAmount": 121.5,
+          "igstAmount": 0,
+          "totalAmount": 1593
+        },
+        {
+          "id": "li_1786769194284_1",
+          "productId": "p_1786768499256",
+          "productCode": "PRD-2",
+          "productName": "Mouse",
+          "hsnSac": "84713010",
+          "unit": "Pcs",
+          "quantity": 1,
+          "rate": 1350,
+          "discountPercent": 0,
+          "discountAmount": 0,
+          "taxableAmount": 1350,
+          "gstRate": 18,
+          "cgstAmount": 121.5,
+          "sgstAmount": 121.5,
+          "igstAmount": 0,
+          "totalAmount": 1593
+        }
+      ],
+      "subTotal": 2700,
+      "totalDiscount": 0,
+      "totalTaxable": 2700,
+      "totalCGST": 243,
+      "totalSGST": 243,
+      "totalIGST": 0,
+      "roundOff": 0,
+      "grandTotal": 3186,
+      "paidAmount": 3186,
+      "dueAmount": 0,
+      "paymentMode": "CASH",
+      "status": "PAID",
+      "qrCodeUrl": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=INVOICE:INV-2026-002_AMT:3186",
+      "createdAt": "2026-08-15T04:46:34.284Z"
+    },
     {
       "id": "inv_1786768791194",
       "docType": "SALES_INVOICE",
@@ -388,6 +455,17 @@
   ],
   "ledgerVouchers": [
     {
+      "id": "v_1786769194284",
+      "voucherNo": "VCH-SLS-INV-2026-002",
+      "date": "2026-08-15",
+      "voucherType": "SALES",
+      "debitAccount": "Acme",
+      "creditAccount": "Sales Account",
+      "amount": 2700,
+      "narration": "Sales Invoice INV-2026-002 generated",
+      "referenceNo": "INV-2026-002"
+    },
+    {
       "id": "v_1786768791194",
       "voucherNo": "VCH-SLS-INV-2026-001",
       "date": "2026-08-15",
@@ -400,6 +478,26 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "al_1786769194284",
+      "timestamp": "2026-08-15T04:46:34.284Z",
+      "userRole": "SALES",
+      "userName": "Karam",
+      "action": "CREATE_INVOICE",
+      "module": "Sales",
+      "details": "Created POS_RECEIPT INV-2026-002 for Acme (₹3186)",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "al_1786769176669",
+      "timestamp": "2026-08-15T04:46:16.669Z",
+      "userRole": "OWNER",
+      "userName": "Karam ",
+      "action": "LOGIN_SUCCESS",
+      "module": "Auth",
+      "details": "Client logged into ERP system (karim@gmail.com)",
+      "ipAddress": "127.0.0.1"
+    },
     {
       "id": "al_1786768828869",
       "timestamp": "2026-08-15T04:40:28.869Z",

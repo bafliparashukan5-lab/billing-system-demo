@@ -74,7 +74,7 @@ export const Header: React.FC<{
           className="flex items-center space-x-1.5 bg-brand-600 hover:bg-brand-500 text-white text-xs px-3 py-1.5 rounded-lg font-semibold shadow-lg shadow-brand-950/40 transition"
         >
           <PlusCircle className="w-3.5 h-3.5" />
-          <span>+ New Invoice</span>
+          <span>New Invoice</span>
         </button>
 
         <button
@@ -82,7 +82,7 @@ export const Header: React.FC<{
           className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded-lg font-medium transition"
         >
           <ShoppingBag className="w-3.5 h-3.5 text-emerald-400" />
-          <span>+ Purchase Bill</span>
+          <span>Purchase Bill</span>
         </button>
 
         <div className="flex items-center space-x-1.5 bg-slate-950/80 p-1 rounded-lg border border-slate-800">

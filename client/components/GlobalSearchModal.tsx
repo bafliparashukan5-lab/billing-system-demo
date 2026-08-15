@@ -22,7 +22,7 @@ export const GlobalSearchModal: React.FC = () => {
 
   if (!isSearchOpen) return null;
 
-  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.code.toLowerCase().includes(query.toLowerCase()) || p.barcode.includes(query));
+  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.code.toLowerCase().includes(query.toLowerCase()) || (p.barcode || '').includes(query));
   const filteredCustomers = customers.filter(c => c.name.toLowerCase().includes(query.toLowerCase()) || c.gstin.toLowerCase().includes(query.toLowerCase()));
   const filteredInvoices = salesInvoices.filter(i => i.invoiceNumber.toLowerCase().includes(query.toLowerCase()) || i.customerName.toLowerCase().includes(query.toLowerCase()));
 
